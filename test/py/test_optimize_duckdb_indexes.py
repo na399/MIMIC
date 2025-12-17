@@ -6,6 +6,9 @@ import unittest
 from pathlib import Path
 
 import duckdb
+import os
+import sys
+import importlib.util
 
 
 class TestOptimizeDuckDBIndexes(unittest.TestCase):
@@ -83,3 +86,49 @@ class TestOptimizeDuckDBIndexes(unittest.TestCase):
             finally:
                 con2.close()
 
+    def test_optimize_expands_tilde_database_path(self) -> None:
+        repo_root = Path(__file__).resolve().parents[2]
+        script = repo_root / "scripts" / "optimize_duckdb_indexes.py"
+
+        with tempfile.TemporaryDirectory() as td:
+            home = Path(td) / "home"
+            (home / "users").mkdir(parents=True, exist_ok=True)
+            db_path = home / "users" / "mimiciv_full.duckdb"
+
+            con = duckdb.connect(str(db_path))
+            con.execute("CREATE SCHEMA omop_cdm")
+            con.execute("CREATE TABLE omop_cdm.src_patients(subject_id INTEGER)")
+            con.close()
+
+            spec = importlib.util.spec_from_file_location("optimize_duckdb_indexes_mod", script)
+            assert spec and spec.loader
+            module = importlib.util.module_from_spec(spec)
+            sys.modules[spec.name] = module
+            try:
+                spec.loader.exec_module(module)
+            except Exception:
+                sys.modules.pop(spec.name, None)
+                raise
+
+            old_home = os.environ.get("HOME", "")
+            old_argv = list(sys.argv)
+            try:
+                os.environ["HOME"] = str(home)
+                sys.argv = [
+                    str(script),
+                    "--database",
+                    "~/users/mimiciv_full.duckdb",
+                    "--schema",
+                    "omop_cdm",
+                    "--enable",
+                    "1",
+                ]
+                rc = module.main()
+                self.assertEqual(rc, 0)
+            finally:
+                sys.argv = old_argv
+                sys.modules.pop(spec.name, None)
+                if old_home:
+                    os.environ["HOME"] = old_home
+                else:
+                    os.environ.pop("HOME", None)

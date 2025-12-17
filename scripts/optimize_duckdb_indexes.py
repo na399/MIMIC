@@ -15,6 +15,7 @@ Notes:
 from __future__ import annotations
 
 import argparse
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, Sequence
@@ -108,7 +109,7 @@ def create_indexes(db_path: Path, schema: str, *, enable_large: bool) -> int:
 
 def main() -> int:
     args = parse_args()
-    db_path = Path(args.database)
+    db_path = Path(os.path.expandvars(args.database)).expanduser()
     if not db_path.exists():
         raise FileNotFoundError(db_path)
     if int(args.enable) != 1:
@@ -121,4 +122,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

@@ -13,6 +13,12 @@ source .venv/bin/activate
 uv pip install -r requirements.txt
 ```
 
+## Run full ETL pipeline
+
+```bash
+uv run python scripts/run_workflow.py -e conf/full.etlconf
+```
+
 ## Quickstart (mock end-to-end)
 
 Creates tiny mock MIMIC-IV CSVs and a minimal vocabulary DuckDB, then runs the full pipeline:
