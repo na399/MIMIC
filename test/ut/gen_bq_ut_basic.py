@@ -40,7 +40,7 @@ config_default = {
                 },
                 {
                     "source_field": "death_date",
-                    "fk_table": "`@source_project`.@core_dataset.admissions",
+                    "fk_table": "`@source_project`.@hosp_dataset.admissions",
                     "fk_field": "deathtime",
                     "inactive_status": "any text helping you to remember why"
                 }
@@ -372,4 +372,3 @@ def main():
 return_code = main()
 
 exit(return_code)
-

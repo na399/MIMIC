@@ -8,7 +8,7 @@
 -- Labs from chartevents
 -- 
 -- Dependencies: run after 
---      st_core.sql,
+--      st_hosp_base.sql,
 --      st_hosp.sql,
 --      st_icu.sql,
 --      lk_meas_units

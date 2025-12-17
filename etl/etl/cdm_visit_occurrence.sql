@@ -7,7 +7,7 @@
 -- Populate cdm_visit_occurrence table
 -- 
 -- Dependencies: run after 
---      st_core.sql,
+--      st_hosp_base.sql,
 --      cdm_person.sql,
 --      cdm_care_site
 -- -------------------------------------------------------------------

@@ -80,7 +80,7 @@ CREATE OR REPLACE VIEW @omop_schema.dose_era AS
 SELECT * EXCLUDE (unit_id, load_table_id, load_row_id)
 FROM @etl_project.@etl_dataset.cdm_dose_era;
 
--- Internal name is cdm_cdm_source; publish as OMOP-standard cdm_source.
+-- Internal name is cdm_cdm_source; publish without a cdm_ prefix for cleaner output.
 DROP VIEW IF EXISTS @omop_schema.cdm_source;
 CREATE OR REPLACE VIEW @omop_schema.source AS
 SELECT * EXCLUDE (unit_id, load_table_id, load_row_id, trace_id)

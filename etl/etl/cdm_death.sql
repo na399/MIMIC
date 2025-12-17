@@ -7,7 +7,7 @@
 -- Populate cdm_death table
 -- 
 -- Dependencies: run after 
---      st_core.sql,
+--      st_hosp_base.sql,
 --      cdm_person.sql
 -- -------------------------------------------------------------------
 

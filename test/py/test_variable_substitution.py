@@ -36,3 +36,18 @@ class TestVariableSubstitution(unittest.TestCase):
         self.assertEqual(merged["x"], 1)
         self.assertEqual(merged["y"], 2)
 
+    def test_substitute_variables_prefers_longest_match(self) -> None:
+        text = "--enable-large @optimize_enable_large --enable @optimize_enable"
+        out = self.duck.substitute_variables(
+            text,
+            {
+                "@optimize_enable": "0",
+                "@optimize_enable_large": "1",
+            },
+        )
+        self.assertEqual(out, "--enable-large 1 --enable 0")
+
+    def test_substitute_variables_resolves_nested_references(self) -> None:
+        text = "x=@a y=@b"
+        out = self.duck.substitute_variables(text, {"@a": "@b", "@b": "OK"})
+        self.assertEqual(out, "x=OK y=OK")

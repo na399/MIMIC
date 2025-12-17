@@ -4,24 +4,20 @@
 -- -------------------------------------------------------------------
 
 -- -------------------------------------------------------------------
--- Populate staging tables for cdm dimension tables
--- 
--- Dependencies: run first after DDL
--- -------------------------------------------------------------------
-
--- -------------------------------------------------------------------
--- Known issues / Open points:
+-- Populate staging tables for patient + admission + transfer data.
 --
--- transfers.stay_id - does not exist in Demo, but is described in the online Documentation
+-- MIMIC-IV v2+ stores patients/admissions/transfers in the hosp module, so
+-- this script always reads from @hosp_dataset.
+--
+-- Dependencies: run first after DDL (before other staging scripts).
 -- -------------------------------------------------------------------
-
 
 -- -------------------------------------------------------------------
 -- src_patients
 -- -------------------------------------------------------------------
 
 CREATE OR REPLACE TABLE @etl_project.@etl_dataset.src_patients AS
-SELECT 
+SELECT
     subject_id                          AS subject_id,
     anchor_year                         AS anchor_year,
     anchor_age                          AS anchor_age,
@@ -36,7 +32,7 @@ SELECT
         subject_id AS subject_id
     ))                                  AS trace_id
 FROM
-    @source_project.@core_dataset.patients
+    @source_project.@hosp_dataset.patients
 ;
 
 -- -------------------------------------------------------------------
@@ -71,7 +67,7 @@ SELECT
         hadm_id AS hadm_id
     ))                                  AS trace_id
 FROM
-    @source_project.@core_dataset.admissions
+    @source_project.@hosp_dataset.admissions
 ;
 
 -- -------------------------------------------------------------------
@@ -100,5 +96,5 @@ SELECT
         transfer_id AS transfer_id
     ))                                  AS trace_id
 FROM
-    @source_project.@core_dataset.transfers
+    @source_project.@hosp_dataset.transfers
 ;

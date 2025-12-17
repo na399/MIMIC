@@ -8,7 +8,7 @@
 -- Labs from labevents
 -- 
 -- Dependencies: run after 
---      st_core.sql,
+--      st_hosp_base.sql,
 --      st_hosp.sql,
 --      lk_vis_part_1.sql,
 --      lk_meas_unit.sql

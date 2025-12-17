@@ -166,7 +166,7 @@ def format_query(s_query, config):
 ----------------------------------------------------
     1) make the command a single line
     windows or maybe 2022 style
-    (TODO sometimes: investigate what happened with multiline text for bq query)
+    (NOTE: investigate what happened with multiline text for bq query when needed)
     2) remove comments at the end of the lines
 
     bqc: ready to run bq command 

@@ -6,7 +6,7 @@
 -- Populate cdm_drug_exposure table
 -- 
 -- Dependencies: run after 
---      st_core.sql
+--      st_hosp_base.sql
 --      st_hosp.sql
 -- -------------------------------------------------------------------
 

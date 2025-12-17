@@ -7,7 +7,7 @@
 -- Populate cdm_visit_detail table
 -- 
 -- Dependencies: run after 
---      st_core.sql,
+--      st_hosp_base.sql,
 --      st_hosp.sql,
 --      st_waveform.sql,
 --      lk_vis_adm_transfers.sql,

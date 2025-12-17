@@ -2,14 +2,12 @@
     "comment": "DuckDB-first MIMIC-IV -> OMOP CDM v5.4 workflow",
     "variables": {
         "@duckdb_path": "data/mimiciv_demo.duckdb",
-        "@mimic_core_dir": "data/physionet.org/files/mimic-iv-demo/2.2/hosp",
         "@mimic_hosp_dir": "data/physionet.org/files/mimic-iv-demo/2.2/hosp",
         "@mimic_icu_dir": "data/physionet.org/files/mimic-iv-demo/2.2/icu",
         "@mimic_derived_dir": "data/physionet.org/files/mimic-iv-demo/2.2/derived",
         "@mimic_waveform_dir": "",
 
         "@source_project": "@duckdb_catalog",
-        "@core_dataset": "raw_core",
         "@hosp_dataset": "raw_hosp",
         "@icu_dataset": "raw_icu",
 
@@ -23,6 +21,9 @@
         "@waveform_dataset": "raw_waveform",
         "@audit_min_percent_mapped": "0",
         "@audit_min_percent_standard": "0",
+        "@ingest_manifest": "fail",
+        "@ingest_sample_size": "100000",
+        "@ingest_include_tables": "patients,admissions,transfers,diagnoses_icd,services,labevents,d_labitems,procedures_icd,hcpcsevents,drgcodes,prescriptions,microbiologyevents,pharmacy,d_items,chartevents,datetimeevents,outputevents,procedureevents",
 
         "@vocab_db_path": "data/vocab.duckdb",
         "@vocab_schema": "main",
@@ -32,6 +33,9 @@
         "@wf_dataset": "raw_waveform",
         "@athena_export_path": "athena_export",
         "@publish_materialize": "0"
+        ,
+        "@optimize_enable": "0",
+        "@optimize_enable_large": "0"
     },
     "duckdb": {
         "database": "@duckdb_path",
@@ -45,6 +49,7 @@
         {"workflow": "vocabulary_refresh", "type": "py", "conf": "workflow_vocabulary_refresh.conf"},
         {"workflow": "ddl", "type": "sql", "conf": "workflow_ddl.conf"},
         {"workflow": "staging", "type": "sql", "conf": "workflow_staging.conf"},
+        {"workflow": "optimize", "type": "py", "conf": "workflow_optimize.conf"},
         {"workflow": "custom_mapping", "type": "py", "conf": "workflow_custom_mapping.conf"},
         {"workflow": "etl", "type": "sql", "conf": "workflow_etl.conf"},
         {"workflow": "publish", "type": "sql", "conf": "workflow_publish.conf"},

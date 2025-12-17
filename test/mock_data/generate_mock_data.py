@@ -29,16 +29,15 @@ def write_csv(path: Path, rows: List[Dict[str, object]]) -> None:
 
 
 def build_sources(base_dir: Path) -> None:
-    core = base_dir / "core"
     hosp = base_dir / "hosp"
     icu = base_dir / "icu"
     waveform = base_dir / "waveform"
     derived = base_dir / "derived"
-    for folder in (core, hosp, icu, waveform, derived):
+    for folder in (hosp, icu, waveform, derived):
         ensure_dir(folder)
 
     write_csv(
-        core / "patients.csv",
+        hosp / "patients.csv",
         [
             {
                 "subject_id": 1,
@@ -51,7 +50,7 @@ def build_sources(base_dir: Path) -> None:
     )
 
     write_csv(
-        core / "admissions.csv",
+        hosp / "admissions.csv",
         [
             {
                 "hadm_id": 10,
@@ -72,7 +71,7 @@ def build_sources(base_dir: Path) -> None:
     )
 
     write_csv(
-        core / "transfers.csv",
+        hosp / "transfers.csv",
         [
             {
                 "transfer_id": 100,

@@ -8,7 +8,7 @@
 -- to use it for lk_meas_* tables and then vise versa
 -- 
 -- Dependencies: run after 
---      st_core.sql
+--      st_hosp_base.sql
 -- -------------------------------------------------------------------
 
 -- -------------------------------------------------------------------

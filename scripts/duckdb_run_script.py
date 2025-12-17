@@ -38,8 +38,16 @@ def merge_config(base: Dict[str, Any], override: Dict[str, Any]) -> Dict[str, An
 
 
 def substitute_variables(text: str, variables: Dict[str, str]) -> str:
-    for var, val in variables.items():
-        text = text.replace(var, val)
+    # Variables commonly reference other variables (e.g., @etl_project=@duckdb_catalog).
+    # Apply replacements repeatedly (bounded) and prefer longer matches first so
+    # `@foo` does not partially replace `@foo_bar`.
+    keys = sorted(variables.keys(), key=len, reverse=True)
+    for _ in range(10):
+        before = text
+        for var in keys:
+            text = text.replace(var, str(variables[var]))
+        if text == before:
+            break
     return text
 
 

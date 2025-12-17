@@ -17,7 +17,6 @@ CREATE TABLE IF NOT EXISTS @audit_schema.run_metadata (
     git_sha VARCHAR,
     duckdb_path VARCHAR,
     vocab_db_path VARCHAR,
-    mimic_core_dir VARCHAR,
     mimic_hosp_dir VARCHAR,
     mimic_icu_dir VARCHAR,
     mimic_derived_dir VARCHAR,
@@ -25,14 +24,24 @@ CREATE TABLE IF NOT EXISTS @audit_schema.run_metadata (
     inserted_at TIMESTAMP DEFAULT now()
 );
 
-INSERT INTO @audit_schema.run_metadata
+INSERT INTO @audit_schema.run_metadata (
+    run_id,
+    run_started_at,
+    git_sha,
+    duckdb_path,
+    vocab_db_path,
+    mimic_hosp_dir,
+    mimic_icu_dir,
+    mimic_derived_dir,
+    mimic_waveform_dir,
+    inserted_at
+)
 SELECT
     CAST('@run_id' AS VARCHAR) AS run_id,
     CAST('@run_started_at' AS TIMESTAMP) AS run_started_at,
     CAST('@git_sha' AS VARCHAR) AS git_sha,
     CAST('@duckdb_path' AS VARCHAR) AS duckdb_path,
     CAST('@vocab_db_path' AS VARCHAR) AS vocab_db_path,
-    CAST('@mimic_core_dir' AS VARCHAR) AS mimic_core_dir,
     CAST('@mimic_hosp_dir' AS VARCHAR) AS mimic_hosp_dir,
     CAST('@mimic_icu_dir' AS VARCHAR) AS mimic_icu_dir,
     CAST('@mimic_derived_dir' AS VARCHAR) AS mimic_derived_dir,

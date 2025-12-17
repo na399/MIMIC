@@ -6,7 +6,7 @@
 -- Populate cdm_condition_occurrence table
 -- 
 -- Dependencies: run after 
---      st_core.sql,
+--      st_hosp_base.sql,
 --      st_hosp.sql,
 --      lk_cond_diagnoses.sql,
 --      lk_meas_chartevents.sql,

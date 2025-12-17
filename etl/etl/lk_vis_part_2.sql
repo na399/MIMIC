@@ -7,7 +7,7 @@
 -- Populate lookups for cdm_visit_occurrence and cdm_visit_detail
 -- 
 -- Dependencies: run after 
---      st_core.sql
+--      st_hosp_base.sql
 --      lk_vis_part_1.sql
 --      lk_meas_labevents.sql
 --      lk_meas_specimen.sql

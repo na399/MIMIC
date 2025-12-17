@@ -6,7 +6,7 @@
 -- Populate lookups for cdm_procedure_occurrence table
 -- 
 -- Dependencies: run after 
---      st_core.sql,
+--      st_hosp_base.sql,
 --      st_hosp.sql,
 --
 -- -------------------------------------------------------------------
@@ -332,4 +332,3 @@ LEFT JOIN
     @etl_project.@etl_dataset.lk_itemid_concept lc
         ON src.itemid = lc.itemid
 ;
-

@@ -203,6 +203,25 @@ def apply_audit_defaults(etlconf: Dict[str, Any]) -> None:
         variables["@git_sha"] = sha
 
 
+def apply_ingest_defaults(etlconf: Dict[str, Any]) -> None:
+    variables = etlconf.setdefault("variables", {})
+    variables.setdefault("@ingest_sample_size", "")
+    variables.setdefault("@ingest_mode", "")
+    variables.setdefault("@ingest_manifest", "")
+    variables.setdefault("@ingest_on_exists", "")
+    variables.setdefault("@ingest_include_tables", "")
+    variables.setdefault("@ingest_row_limit", "")
+    variables.setdefault("@ingest_type_overrides", "")
+    variables.setdefault("@ingest_all_varchar_flag", "")
+    variables.setdefault("@ingest_drop_raw_flag", "")
+    variables.setdefault("@ingest_keep_case_flag", "")
+
+def apply_optimize_defaults(etlconf: Dict[str, Any]) -> None:
+    variables = etlconf.setdefault("variables", {})
+    variables.setdefault("@optimize_enable", "0")
+    variables.setdefault("@optimize_enable_large", "0")
+
+
 def verify_vocab_tables(etlconf: Dict[str, Any]) -> None:
     variables = etlconf.get("variables", {}) or {}
     vocab_db_path = Path(str(variables.get("@vocab_db_path") or ""))
@@ -254,6 +273,8 @@ def main() -> int:
 
     apply_vocab_defaults(merged_etlconf)
     apply_audit_defaults(merged_etlconf)
+    apply_ingest_defaults(merged_etlconf)
+    apply_optimize_defaults(merged_etlconf)
     verify_vocab_tables(merged_etlconf)
 
     config_dir = etlconf_path.parent

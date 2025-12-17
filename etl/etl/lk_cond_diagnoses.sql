@@ -6,7 +6,7 @@
 -- Populate cdm_condition_occurrence table
 -- 
 -- Dependencies: run after 
---      st_core.sql,
+--      st_hosp_base.sql,
 --      st_hosp.sql
 --
 -- Remove dots from icd_code
@@ -110,7 +110,7 @@ LEFT JOIN
 
 -- -------------------------------------------------------------------
 -- gcpt_admissions_diagnosis_to_concept 
---      do not use since there is no diagnosis in core.admissions
+--      do not use since diagnoses come from diagnoses_icd (not admissions)
 -- -------------------------------------------------------------------
 
 -- -------------------------------------------------------------------

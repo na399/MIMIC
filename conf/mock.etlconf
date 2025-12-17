@@ -2,14 +2,12 @@
     "comment": "Mock data end-to-end pipeline for DuckDB",
     "variables": {
         "@duckdb_path": "data/mock_mimic.duckdb",
-        "@mimic_core_dir": "data/mock_mimic/core",
         "@mimic_hosp_dir": "data/mock_mimic/hosp",
         "@mimic_icu_dir": "data/mock_mimic/icu",
         "@mimic_derived_dir": "data/mock_mimic/derived",
         "@mimic_waveform_dir": "data/mock_mimic/waveform",
 
         "@source_project": "@duckdb_catalog",
-        "@core_dataset": "raw_core",
         "@hosp_dataset": "raw_hosp",
         "@icu_dataset": "raw_icu",
         "@waveform_dataset": "raw_waveform",
@@ -24,6 +22,9 @@
         "@audit_min_percent_mapped": "1",
         "@audit_min_percent_standard": "1",
         "@audit_mapping_tables": "condition_occurrence,procedure_occurrence,drug_exposure",
+        "@ingest_manifest": "fail",
+        "@ingest_sample_size": "100000",
+        "@ingest_include_tables": "patients,admissions,transfers,diagnoses_icd,services,labevents,d_labitems,procedures_icd,hcpcsevents,drgcodes,prescriptions,microbiologyevents,pharmacy,d_items,chartevents,datetimeevents,outputevents,procedureevents",
 
         "@vocab_db_path": "data/mock_vocab.duckdb",
         "@vocab_schema": "main",
@@ -33,6 +34,9 @@
         "@wf_dataset": "raw_waveform",
         "@athena_export_path": "",
         "@publish_materialize": "0"
+        ,
+        "@optimize_enable": "0",
+        "@optimize_enable_large": "0"
     },
     "duckdb": {
         "database": "@duckdb_path",
@@ -45,6 +49,7 @@
         {"workflow": "ingest_csv", "type": "py", "conf": "workflow_ingest_csv.conf"},
         {"workflow": "ddl", "type": "sql", "conf": "workflow_ddl.conf"},
         {"workflow": "staging", "type": "sql", "conf": "workflow_staging.conf"},
+        {"workflow": "optimize", "type": "py", "conf": "workflow_optimize.conf"},
         {"workflow": "custom_mapping", "type": "py", "conf": "workflow_custom_mapping.conf"},
         {"workflow": "etl", "type": "sql", "conf": "workflow_etl.conf"},
         {"workflow": "publish", "type": "sql", "conf": "workflow_publish.conf"},

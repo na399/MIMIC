@@ -6,7 +6,7 @@
 -- Populate lookups for cdm_observation table
 -- 
 -- Dependencies: run after 
---      st_core.sql,
+--      st_hosp_base.sql,
 --      st_hosp.sql
 -- -------------------------------------------------------------------
 

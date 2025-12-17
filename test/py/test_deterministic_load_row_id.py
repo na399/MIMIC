@@ -30,16 +30,16 @@ class TestDeterministicLoadRowId(unittest.TestCase):
             base = Path(td)
             db_path = base / "x.duckdb"
             con = duckdb.connect(str(db_path))
-            con.execute("CREATE SCHEMA raw_core")
+            con.execute("CREATE SCHEMA raw_hosp")
             con.execute("CREATE SCHEMA omop_cdm")
             con.execute(
-                "CREATE TABLE raw_core.patients AS SELECT 1::INTEGER AS subject_id, 2020::INTEGER AS anchor_year, 30::INTEGER AS anchor_age, '2000 - 2020' AS anchor_year_group, 'M' AS gender"
+                "CREATE TABLE raw_hosp.patients AS SELECT 1::INTEGER AS subject_id, 2020::INTEGER AS anchor_year, 30::INTEGER AS anchor_age, '2000 - 2020' AS anchor_year_group, 'M' AS gender"
             )
             con.execute(
-                "CREATE TABLE raw_core.admissions AS SELECT 10::INTEGER AS hadm_id, 1::INTEGER AS subject_id, TIMESTAMP '2020-01-01 00:00:00' AS admittime, TIMESTAMP '2020-01-02 00:00:00' AS dischtime, NULL::TIMESTAMP AS deathtime, 'EMERGENCY' AS admission_type, 'ER' AS admission_location, 'HOME' AS discharge_location, 'WHITE' AS race, TIMESTAMP '2020-01-01 00:00:00' AS edregtime, 'Private' AS insurance, 'SINGLE' AS marital_status, 'EN' AS language"
+                "CREATE TABLE raw_hosp.admissions AS SELECT 10::INTEGER AS hadm_id, 1::INTEGER AS subject_id, TIMESTAMP '2020-01-01 00:00:00' AS admittime, TIMESTAMP '2020-01-02 00:00:00' AS dischtime, NULL::TIMESTAMP AS deathtime, 'EMERGENCY' AS admission_type, 'ER' AS admission_location, 'HOME' AS discharge_location, 'WHITE' AS race, TIMESTAMP '2020-01-01 00:00:00' AS edregtime, 'Private' AS insurance, 'SINGLE' AS marital_status, 'EN' AS language"
             )
             con.execute(
-                "CREATE TABLE raw_core.transfers AS SELECT 100::INTEGER AS transfer_id, 10::INTEGER AS hadm_id, 1::INTEGER AS subject_id, 'CARDIOLOGY' AS careunit, TIMESTAMP '2020-01-01 01:00:00' AS intime, TIMESTAMP '2020-01-01 02:00:00' AS outtime, 'transfer' AS eventtype"
+                "CREATE TABLE raw_hosp.transfers AS SELECT 100::INTEGER AS transfer_id, 10::INTEGER AS hadm_id, 1::INTEGER AS subject_id, 'CARDIOLOGY' AS careunit, TIMESTAMP '2020-01-01 01:00:00' AS intime, TIMESTAMP '2020-01-01 02:00:00' AS outtime, 'transfer' AS eventtype"
             )
             con.close()
 
@@ -49,21 +49,20 @@ class TestDeterministicLoadRowId(unittest.TestCase):
                     "@etl_project": Path(str(db_path)).stem,
                     "@etl_dataset": "omop_cdm",
                     "@source_project": Path(str(db_path)).stem,
-                    "@core_dataset": "raw_core",
+                    "@hosp_dataset": "raw_hosp",
                 },
                 "duckdb": {"database": "@duckdb_path", "pre_sql": ["etl/duckdb/macros.sql"]},
             }
 
-            st_core = str(self.repo_root / "etl" / "staging" / "st_core.sql")
-            self.runner.run_scripts([st_core], config)
+            st_hosp_base = str(self.repo_root / "etl" / "staging" / "st_hosp_base.sql")
+            self.runner.run_scripts([st_hosp_base], config)
             con2 = duckdb.connect(str(db_path), read_only=True)
             first = con2.execute("SELECT load_row_id FROM omop_cdm.src_patients").fetchone()[0]
             con2.close()
 
-            self.runner.run_scripts([st_core], config)
+            self.runner.run_scripts([st_hosp_base], config)
             con3 = duckdb.connect(str(db_path), read_only=True)
             second = con3.execute("SELECT load_row_id FROM omop_cdm.src_patients").fetchone()[0]
             con3.close()
 
             self.assertEqual(first, second)
-

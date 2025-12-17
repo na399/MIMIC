@@ -8,7 +8,7 @@
 -- -------------------------------------------------------------------
 
 -- -------------------------------------------------------------------
--- FK to `@source_project`.@core_dataset.admissions.deathtime
+-- FK to `@source_project`.@hosp_dataset.admissions.deathtime
 -- -------------------------------------------------------------------
 
 INSERT INTO @metrics_project.@metrics_dataset.report_unit_test
@@ -24,9 +24,9 @@ FROM
     @etl_project.@etl_dataset.cdm_death cdm
 LEFT JOIN
 (
-    SELECT deathtime FROM `@source_project`.@core_dataset.admissions
+    SELECT deathtime FROM `@source_project`.@hosp_dataset.admissions
     UNION DISTINCT
-    SELECT dischtime FROM `@source_project`.@core_dataset.admissions
+    SELECT dischtime FROM `@source_project`.@hosp_dataset.admissions
 ) fk
     ON cdm.death_date = fk.deathtime
 WHERE

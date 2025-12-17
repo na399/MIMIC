@@ -6,7 +6,7 @@
 -- -------------------------------------------------------------------
 -- Populate cdm_care_site table
 -- 
--- Dependencies: run after st_core.sql
+-- Dependencies: run after st_hosp_base.sql
 -- on Demo: 
 -- -------------------------------------------------------------------
 
