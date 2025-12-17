@@ -151,6 +151,18 @@ def run_scripts(
 
     con = duckdb.connect(db_path)
 
+    threads = duck_conf.get("threads")
+    if threads is not None and str(threads) != "":
+        con.execute(f"SET threads={int(threads)}")
+
+    memory_limit = duck_conf.get("memory_limit")
+    if memory_limit is not None and str(memory_limit) != "":
+        con.execute(f"SET memory_limit='{substitute_variables(str(memory_limit), variables)}'")
+
+    temp_directory = duck_conf.get("temp_directory")
+    if temp_directory is not None and str(temp_directory) != "":
+        con.execute(f"SET temp_directory='{substitute_variables(str(temp_directory), variables)}'")
+
     max_depth = duck_conf.get("max_expression_depth")
     if max_depth:
         con.execute(f"SET max_expression_depth={max_depth}")

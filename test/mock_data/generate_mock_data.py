@@ -1,6 +1,7 @@
 """Generate small mock MIMIC-IV CSVs and a minimal vocabulary DuckDB."""
 from __future__ import annotations
 
+import argparse
 import csv
 import json
 from pathlib import Path
@@ -9,8 +10,8 @@ from typing import Dict, Iterable, List
 import duckdb
 
 
-BASE_DIR = Path("data/mock_mimic")
-VOCAB_DB = Path("data/mock_vocab.duckdb")
+DEFAULT_BASE_DIR = Path("data/mock_mimic")
+DEFAULT_VOCAB_DB = Path("data/mock_vocab.duckdb")
 
 
 def ensure_dir(path: Path) -> None:
@@ -27,12 +28,12 @@ def write_csv(path: Path, rows: List[Dict[str, object]]) -> None:
             writer.writerow(row)
 
 
-def build_sources() -> None:
-    core = BASE_DIR / "core"
-    hosp = BASE_DIR / "hosp"
-    icu = BASE_DIR / "icu"
-    waveform = BASE_DIR / "waveform"
-    derived = BASE_DIR / "derived"
+def build_sources(base_dir: Path) -> None:
+    core = base_dir / "core"
+    hosp = base_dir / "hosp"
+    icu = base_dir / "icu"
+    waveform = base_dir / "waveform"
+    derived = base_dir / "derived"
     for folder in (core, hosp, icu, waveform, derived):
         ensure_dir(folder)
 
@@ -369,17 +370,18 @@ def map_type(bq_type: str) -> str:
     }.get(bq_type.upper(), "VARCHAR")
 
 
-def create_vocabulary() -> None:
-    if VOCAB_DB.exists():
-        VOCAB_DB.unlink()
-    ensure_dir(VOCAB_DB.parent)
-    con = duckdb.connect(str(VOCAB_DB))
+def create_vocabulary(vocab_db: Path, *, include_clinical_maps: bool) -> None:
+    if vocab_db.exists():
+        vocab_db.unlink()
+    ensure_dir(vocab_db.parent)
+    con = duckdb.connect(str(vocab_db))
     # Keep everything in DuckDB's default schema (main) to match full Athena
     # exports, and also expose a legacy "vocab" schema via views for backwards
     # compatibility with older configs.
     con.execute("CREATE SCHEMA IF NOT EXISTS main")
     con.execute("CREATE SCHEMA IF NOT EXISTS vocab")
-    schema_dir = Path("vocabulary_refresh/omop_schemas_vocab_bq")
+    repo_root = Path(__file__).resolve().parents[2]
+    schema_dir = repo_root / "vocabulary_refresh" / "omop_schemas_vocab_bq"
     vocab_tables = [
         "concept",
         "concept_relationship",
@@ -487,10 +489,140 @@ def create_vocabulary() -> None:
         ),
     )
 
+    if include_clinical_maps:
+        # Minimal clinical mappings so the mock ETL validates that mapping logic works.
+        concepts: list[tuple] = [
+            # Source ICD10CM diagnosis (I10) -> standard condition concept.
+            (
+                2000001001,
+                "Essential (primary) hypertension (ICD10CM I10)",
+                "Condition",
+                "ICD10CM",
+                "ICD10CM",
+                None,
+                "I10",
+                "1970-01-01",
+                "2099-12-31",
+                None,
+            ),
+            (
+                2000001002,
+                "Hypertensive disorder (mock SNOMED standard)",
+                "Condition",
+                "SNOMED",
+                "Clinical Finding",
+                "S",
+                "38341003",
+                "1970-01-01",
+                "2099-12-31",
+                None,
+            ),
+            # Source ICD10PCS procedure -> standard procedure concept.
+            (
+                2000002001,
+                "Mock ICD10PCS procedure (0JH60BZ)",
+                "Procedure",
+                "ICD10PCS",
+                "ICD10PCS",
+                None,
+                "0JH60BZ",
+                "1970-01-01",
+                "2099-12-31",
+                None,
+            ),
+            (
+                2000002002,
+                "Mock procedure (standard)",
+                "Procedure",
+                "SNOMED",
+                "Procedure",
+                "S",
+                "999000",
+                "1970-01-01",
+                "2099-12-31",
+                None,
+            ),
+            # Source HCPCS procedure -> standard procedure concept.
+            (
+                2000003001,
+                "Mock HCPCS procedure (99281)",
+                "Procedure",
+                "HCPCS",
+                "HCPCS",
+                None,
+                "99281",
+                "1970-01-01",
+                "2099-12-31",
+                None,
+            ),
+            (
+                2000003002,
+                "Mock procedure 2 (standard)",
+                "Procedure",
+                "SNOMED",
+                "Procedure",
+                "S",
+                "999001",
+                "1970-01-01",
+                "2099-12-31",
+                None,
+            ),
+            # Source NDC drug -> standard drug concept.
+            (
+                2000004001,
+                "Mock NDC drug (12345-6789)",
+                "Drug",
+                "NDC",
+                "NDC",
+                None,
+                "12345-6789",
+                "1970-01-01",
+                "2099-12-31",
+                None,
+            ),
+            (
+                2000004002,
+                "Mock Aspirin (standard)",
+                "Drug",
+                "RxNorm",
+                "Ingredient",
+                "S",
+                "1191",
+                "1970-01-01",
+                "2099-12-31",
+                None,
+            ),
+        ]
+
+        for row in concepts:
+            con.execute("INSERT INTO main.concept VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", row)
+
+        relationships: list[tuple] = [
+            (2000001001, 2000001002, "Maps to", "1970-01-01", "2099-12-31", None),
+            (2000002001, 2000002002, "Maps to", "1970-01-01", "2099-12-31", None),
+            (2000003001, 2000003002, "Maps to", "1970-01-01", "2099-12-31", None),
+            (2000004001, 2000004002, "Maps to", "1970-01-01", "2099-12-31", None),
+        ]
+        for row in relationships:
+            con.execute("INSERT INTO main.concept_relationship VALUES (?, ?, ?, ?, ?, ?)", row)
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Generate mock MIMIC-IV CSVs and a minimal vocab DuckDB")
+    parser.add_argument("--base-dir", type=Path, default=DEFAULT_BASE_DIR, help="Output folder for mock MIMIC CSVs")
+    parser.add_argument("--vocab-db", type=Path, default=DEFAULT_VOCAB_DB, help="Output DuckDB path for minimal vocab")
+    parser.add_argument(
+        "--no-clinical-maps",
+        action="store_true",
+        help="Do not add any clinical Maps-to rows (produces a vocab that will result in 0% mapping rates).",
+    )
+    return parser.parse_args()
+
 
 def main() -> None:
-    build_sources()
-    create_vocabulary()
+    args = parse_args()
+    build_sources(args.base_dir)
+    create_vocabulary(args.vocab_db, include_clinical_maps=not args.no_clinical_maps)
 
 
 if __name__ == "__main__":

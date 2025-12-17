@@ -70,7 +70,7 @@ LEFT JOIN @etl_project.@etl_dataset.voc_concept c
 -- -------------------------------------------------------------------
 
 -- -------------------------------------------------------------------
--- TODO
+-- Notes
 -- -------------------------------------------------------------------
 
 CREATE OR REPLACE TABLE @etl_project.@etl_dataset.tmp_drugWithDose AS
@@ -189,7 +189,7 @@ FROM @etl_project.@etl_dataset.tmp_drugIngredientExp
 -- -------------------------------------------------------------------
 
 -- -------------------------------------------------------------------
--- TODO
+-- Notes
 -- -------------------------------------------------------------------
 
 CREATE OR REPLACE TABLE @etl_project.@etl_dataset.tmp_cteDoseTarget AS
@@ -254,7 +254,7 @@ FROM @etl_project.@etl_dataset.tmp_cteDoseTarget
 -- -------------------------------------------------------------------
 
 -- -------------------------------------------------------------------
--- TODO
+-- Notes
 -- -------------------------------------------------------------------
 
 CREATE OR REPLACE TABLE @etl_project.@etl_dataset.tmp_cteDoseEndDates_e AS
@@ -281,7 +281,7 @@ FROM @etl_project.@etl_dataset.tmp_cteDoseEndDates_rawdata
 -- -------------------------------------------------------------------
 
 -- -------------------------------------------------------------------
--- TODO
+-- Notes
 -- -------------------------------------------------------------------
 
 CREATE OR REPLACE TABLE @etl_project.@etl_dataset.tmp_cteDoseEndDates AS
@@ -301,7 +301,7 @@ WHERE
 -- -------------------------------------------------------------------
 
 -- -------------------------------------------------------------------
--- TODO
+-- Notes
 -- -------------------------------------------------------------------
 
 CREATE OR REPLACE TABLE @etl_project.@etl_dataset.tmp_cteDoseFinalEnds AS

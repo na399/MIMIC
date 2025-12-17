@@ -29,7 +29,11 @@ SELECT
     CAST(0 AS INT64)                    AS cancelreason, -- MIMIC IV 2.0 change, the field is removed
     --
     'procedureevents'                   AS load_table_id,
-    FARM_FINGERPRINT(GENERATE_UUID())   AS load_row_id,
+    FARM_FINGERPRINT(TO_JSON_STRING(STRUCT(
+        subject_id AS subject_id,
+        hadm_id AS hadm_id,
+        starttime AS starttime
+    )))                                 AS load_row_id,
     TO_JSON_STRING(STRUCT(
         subject_id AS subject_id,
         hadm_id AS hadm_id,
@@ -56,7 +60,10 @@ SELECT
     -- highnormalvalue
     --
     'd_items'                           AS load_table_id,
-    FARM_FINGERPRINT(GENERATE_UUID())   AS load_row_id,
+    FARM_FINGERPRINT(TO_JSON_STRING(STRUCT(
+        itemid AS itemid,
+        linksto AS linksto
+    )))                                 AS load_row_id,
     TO_JSON_STRING(STRUCT(
         itemid AS itemid,
         linksto AS linksto
@@ -79,7 +86,12 @@ SELECT
     value       AS value,
     --
     'datetimeevents'                    AS load_table_id,
-    FARM_FINGERPRINT(GENERATE_UUID())   AS load_row_id,
+    FARM_FINGERPRINT(TO_JSON_STRING(STRUCT(
+        subject_id AS subject_id,
+        hadm_id AS hadm_id,
+        stay_id AS stay_id,
+        charttime AS charttime
+    )))                                 AS load_row_id,
     TO_JSON_STRING(STRUCT(
         subject_id AS subject_id,
         hadm_id AS hadm_id,
@@ -103,7 +115,12 @@ SELECT
     valueuom    AS valueuom,
     --
     'chartevents'                       AS load_table_id,
-    FARM_FINGERPRINT(GENERATE_UUID())   AS load_row_id,
+    FARM_FINGERPRINT(TO_JSON_STRING(STRUCT(
+        subject_id AS subject_id,
+        hadm_id AS hadm_id,
+        stay_id AS stay_id,
+        charttime AS charttime
+    )))                                 AS load_row_id,
     TO_JSON_STRING(STRUCT(
         subject_id AS subject_id,
         hadm_id AS hadm_id,
@@ -126,7 +143,12 @@ SELECT
     valueuom    AS valueuom,
     --
     'outputevents'                       AS load_table_id,
-    FARM_FINGERPRINT(GENERATE_UUID())   AS load_row_id,
+    FARM_FINGERPRINT(TO_JSON_STRING(STRUCT(
+        subject_id AS subject_id,
+        hadm_id AS hadm_id,
+        stay_id AS stay_id,
+        charttime AS charttime
+    )))                                 AS load_row_id,
     TO_JSON_STRING(STRUCT(
         subject_id AS subject_id,
         hadm_id AS hadm_id,

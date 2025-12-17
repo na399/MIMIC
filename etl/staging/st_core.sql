@@ -29,7 +29,9 @@ SELECT
     gender                              AS gender,
     --
     'patients'                          AS load_table_id,
-    FARM_FINGERPRINT(GENERATE_UUID())   AS load_row_id,
+    FARM_FINGERPRINT(TO_JSON_STRING(STRUCT(
+        subject_id AS subject_id
+    )))                                 AS load_row_id,
     TO_JSON_STRING(STRUCT(
         subject_id AS subject_id
     ))                                  AS trace_id
@@ -60,7 +62,10 @@ SELECT
     -- hospital_expire_flag
     --
     'admissions'                        AS load_table_id,
-    FARM_FINGERPRINT(GENERATE_UUID())   AS load_row_id,
+    FARM_FINGERPRINT(TO_JSON_STRING(STRUCT(
+        subject_id AS subject_id,
+        hadm_id AS hadm_id
+    )))                                 AS load_row_id,
     TO_JSON_STRING(STRUCT(
         subject_id AS subject_id,
         hadm_id AS hadm_id
@@ -84,7 +89,11 @@ SELECT
     eventtype                           AS eventtype,
     --
     'transfers'                         AS load_table_id,
-    FARM_FINGERPRINT(GENERATE_UUID())   AS load_row_id,
+    FARM_FINGERPRINT(TO_JSON_STRING(STRUCT(
+        subject_id AS subject_id,
+        hadm_id AS hadm_id,
+        transfer_id AS transfer_id
+    )))                                 AS load_row_id,
     TO_JSON_STRING(STRUCT(
         subject_id AS subject_id,
         hadm_id AS hadm_id,
@@ -93,4 +102,3 @@ SELECT
 FROM
     @source_project.@core_dataset.transfers
 ;
-

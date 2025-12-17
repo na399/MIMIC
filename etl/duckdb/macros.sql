@@ -2,7 +2,8 @@
 CREATE SCHEMA IF NOT EXISTS util;
 
 -- hashing/uuid helpers
-CREATE OR REPLACE MACRO FARM_FINGERPRINT(val) AS abs(hash(val));
+-- Return a signed BIGINT (fits INT64) for compatibility with legacy scripts.
+CREATE OR REPLACE MACRO FARM_FINGERPRINT(val) AS CAST(abs(hash(val)) % 9223372036854775807 AS BIGINT);
 
 -- date/time helpers
 CREATE OR REPLACE MACRO PARSE_DATE(fmt, val) AS CAST(val AS DATE);

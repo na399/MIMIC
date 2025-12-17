@@ -13,10 +13,24 @@ import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
+from uuid import uuid4
 
 import duckdb
 from duckdb_run_script import run_scripts, merge_config, substitute_variables
 from tqdm import tqdm
+
+
+REQUIRED_VOCAB_TABLES = (
+    "concept",
+    "concept_relationship",
+    "vocabulary",
+    "domain",
+    "concept_class",
+    "relationship",
+    "concept_synonym",
+    "concept_ancestor",
+    "drug_strength",
+)
 
 
 def load_json(path: str) -> Dict[str, Any]:
@@ -166,6 +180,62 @@ def apply_vocab_defaults(etlconf: Dict[str, Any]) -> None:
         variables["@voc_dataset"] = "vocab"
 
 
+def apply_audit_defaults(etlconf: Dict[str, Any]) -> None:
+    variables = etlconf.setdefault("variables", {})
+    variables.setdefault("@audit_min_percent_mapped", "0")
+    variables.setdefault("@audit_min_percent_standard", "0")
+    variables.setdefault("@audit_fail_on_dq", "0")
+    variables.setdefault("@audit_mapping_tables", "")
+
+    variables.setdefault("@run_started_at", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    variables.setdefault("@run_id", str(uuid4()))
+
+    if "@git_sha" not in variables:
+        try:
+            repo_root = Path(__file__).resolve().parents[1]
+            sha = (
+                subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=repo_root, stderr=subprocess.DEVNULL)
+                .decode("utf-8")
+                .strip()
+            )
+        except Exception:
+            sha = ""
+        variables["@git_sha"] = sha
+
+
+def verify_vocab_tables(etlconf: Dict[str, Any]) -> None:
+    variables = etlconf.get("variables", {}) or {}
+    vocab_db_path = Path(str(variables.get("@vocab_db_path") or ""))
+    schema = str(variables.get("@voc_dataset") or variables.get("@vocab_schema") or "main")
+    if not vocab_db_path.exists():
+        raise FileNotFoundError(vocab_db_path)
+
+    con = duckdb.connect(str(vocab_db_path), read_only=True)
+    try:
+        missing: list[str] = []
+        for table in REQUIRED_VOCAB_TABLES:
+            row = con.execute(
+                """
+                SELECT 1
+                FROM information_schema.tables
+                WHERE table_schema = ? AND table_name = ?
+                LIMIT 1
+                """,
+                [schema, table],
+            ).fetchone()
+            if row is None:
+                missing.append(table)
+        if missing:
+            raise RuntimeError(
+                "Vocab DuckDB is missing required tables in schema "
+                f"'{schema}': {', '.join(missing)}. "
+                "Point @vocab_db_path at a full OMOP vocab DB (data/vocab.duckdb) "
+                "or bootstrap your minimal DB with scripts/bootstrap_vocab_smoke.py."
+            )
+    finally:
+        con.close()
+
+
 def main() -> int:
     args = parse_args()
     etlconf_path = Path(args.etlconf)
@@ -183,6 +253,8 @@ def main() -> int:
             merged_etlconf["variables"][key] = value
 
     apply_vocab_defaults(merged_etlconf)
+    apply_audit_defaults(merged_etlconf)
+    verify_vocab_tables(merged_etlconf)
 
     config_dir = etlconf_path.parent
     workflows = merged_etlconf.get("workflows", [])

@@ -21,7 +21,7 @@
 --      Because source rows can be multiplied during the ETL.
 -- seq_num in custom mapping (seq_num_to_concept): 
 --      Replace deprecated detailed type concepts with standard: 32821    OMOP4976894 EHR billing record
---      TODO in later interations: investigate a possibility to prioritize diagnoses according to seq_num
+--      NOTE in later iterations: investigate a possibility to prioritize diagnoses according to seq_num
 -- condition_status_source_value / concept_id
 --      investigate if there is data for conditons status
 -- -------------------------------------------------------------------
@@ -73,7 +73,12 @@ SELECT
     src.seq_num                         AS seq_num,
     src.start_datetime                  AS start_datetime,
     src.end_datetime                    AS end_datetime,
-    32821                               AS type_concept_id, -- OMOP4976894 EHR billing record
+    CASE
+        WHEN src.seq_num = 1 THEN 38000183 -- Inpatient detail - primary
+        WHEN src.seq_num BETWEEN 2 AND 15 THEN 38000183 + src.seq_num -- 2nd..15th position
+        WHEN src.seq_num BETWEEN 16 AND 20 THEN 44818709 + (src.seq_num - 16) -- 16th..20th position
+        ELSE 32821 -- OMOP4976894 EHR billing record (fallback)
+    END                                 AS type_concept_id,
     --
     src.source_code                     AS source_code,
     src.source_vocabulary_id            AS source_vocabulary_id,

@@ -19,7 +19,7 @@
 -- open points: 
 --      source table pharmacy - it is not here yet
 --      mimiciv_drug_ndc.concept_class_id = 'Prescription Drug' - is it right?
---      TODO: one distinct list of codes, then one join to vocabulary tables (1.42GB per vocab join)
+--      NOTE: one distinct list of codes, then one join to vocabulary tables (1.42GB per vocab join)
 -- -------------------------------------------------------------------
 
 
@@ -41,9 +41,9 @@ SELECT
     src.dose_val_rx             AS dose_val_rx,
     src.starttime               AS start_datetime,
     COALESCE(src.stoptime, src.starttime) AS end_datetime,
-    src.route                   AS route_source_code, --TODO: add route AS local concept,
+    src.route                   AS route_source_code, -- NOTE: add route AS local concept
     'mimiciv_drug_route'        AS route_source_vocabulary,
-    src.form_unit_disp          AS dose_unit_source_code, --TODO: add unit AS local concept,
+    src.form_unit_disp          AS dose_unit_source_code, -- NOTE: add unit AS local concept
     CAST(src.ndc AS STRING)     AS ndc_source_code, -- ndc was used for automatic/manual mapping,
     'NDC'                       AS ndc_source_vocabulary,
     src.form_val_disp           AS form_val_disp,

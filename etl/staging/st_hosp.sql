@@ -32,7 +32,10 @@ SELECT
     icd_version     AS icd_version,
     --
     'diagnoses_icd'                     AS load_table_id,
-    FARM_FINGERPRINT(GENERATE_UUID())   AS load_row_id,
+    FARM_FINGERPRINT(TO_JSON_STRING(STRUCT(
+        hadm_id AS hadm_id,
+        seq_num AS seq_num
+    )))                                 AS load_row_id,
     TO_JSON_STRING(STRUCT(
         hadm_id AS hadm_id,
         seq_num AS seq_num
@@ -58,7 +61,11 @@ SELECT
     curr_service                        AS curr_service,
     --
     'services'                          AS load_table_id,
-    FARM_FINGERPRINT(GENERATE_UUID())   AS load_row_id,
+    FARM_FINGERPRINT(TO_JSON_STRING(STRUCT(
+        subject_id AS subject_id,
+        hadm_id AS hadm_id,
+        transfertime AS transfertime
+    )))                                 AS load_row_id,
     TO_JSON_STRING(STRUCT(
         subject_id AS subject_id,
         hadm_id AS hadm_id,
@@ -86,7 +93,9 @@ SELECT
     ref_range_upper                     AS ref_range_upper,
     --
     'labevents'                         AS load_table_id,
-    FARM_FINGERPRINT(GENERATE_UUID())   AS load_row_id,
+    FARM_FINGERPRINT(TO_JSON_STRING(STRUCT(
+        labevent_id AS labevent_id
+    )))                                 AS load_row_id,
     TO_JSON_STRING(STRUCT(
         labevent_id AS labevent_id
     ))                                  AS trace_id
@@ -107,7 +116,9 @@ SELECT
     CAST(NULL AS STRING)                AS loinc_code, -- MIMIC IV 2.0 change, the field is removed
     --
     'd_labitems'                        AS load_table_id,
-    FARM_FINGERPRINT(GENERATE_UUID())   AS load_row_id,
+    FARM_FINGERPRINT(TO_JSON_STRING(STRUCT(
+        itemid AS itemid
+    )))                                 AS load_row_id,
     TO_JSON_STRING(STRUCT(
         itemid AS itemid
     ))                                  AS trace_id
@@ -132,7 +143,12 @@ SELECT
     icd_version     AS icd_version,
     --
     'procedures_icd'                    AS load_table_id,
-    FARM_FINGERPRINT(GENERATE_UUID())   AS load_row_id,
+    FARM_FINGERPRINT(TO_JSON_STRING(STRUCT(
+        subject_id AS subject_id,
+        hadm_id AS hadm_id,
+        icd_code AS icd_code,
+        icd_version AS icd_version
+    )))                                 AS load_row_id,
     TO_JSON_STRING(STRUCT(
         subject_id AS subject_id,
         hadm_id AS hadm_id,
@@ -156,7 +172,12 @@ SELECT
     src.short_description               AS short_description,
     --
     'hcpcsevents'                       AS load_table_id,
-    FARM_FINGERPRINT(GENERATE_UUID())   AS load_row_id,
+    FARM_FINGERPRINT(TO_JSON_STRING(STRUCT(
+        src.subject_id AS subject_id,
+        src.hadm_id AS hadm_id,
+        src.hcpcs_cd AS hcpcs_cd,
+        src.seq_num AS seq_num
+    )))                                 AS load_row_id,
     TO_JSON_STRING(STRUCT(
         src.subject_id AS subject_id,
         src.hadm_id AS hadm_id,
@@ -180,7 +201,11 @@ SELECT
     src.description                     AS description,
     --
     'drgcodes'                       AS load_table_id,
-    FARM_FINGERPRINT(GENERATE_UUID())   AS load_row_id,
+    FARM_FINGERPRINT(TO_JSON_STRING(STRUCT(
+        src.subject_id AS subject_id,
+        src.hadm_id AS hadm_id,
+        COALESCE(src.drg_code, '') AS drg_code
+    )))                                 AS load_row_id,
     TO_JSON_STRING(STRUCT(
         src.subject_id AS subject_id,
         src.hadm_id AS hadm_id,
@@ -215,7 +240,12 @@ SELECT
     route                               AS route,
     --
     'prescriptions'                     AS load_table_id,
-    FARM_FINGERPRINT(GENERATE_UUID())   AS load_row_id,
+    FARM_FINGERPRINT(TO_JSON_STRING(STRUCT(
+        subject_id AS subject_id,
+        hadm_id AS hadm_id,
+        pharmacy_id AS pharmacy_id,
+        starttime AS starttime
+    )))                                 AS load_row_id,
     TO_JSON_STRING(STRUCT(
         subject_id AS subject_id,
         hadm_id AS hadm_id,
@@ -251,7 +281,11 @@ SELECT
     interpretation              AS interpretation, -- bacteria's degree of resistance to the antibiotic
     --
     'microbiologyevents'                AS load_table_id,
-    FARM_FINGERPRINT(GENERATE_UUID())   AS load_row_id,
+    FARM_FINGERPRINT(TO_JSON_STRING(STRUCT(
+        subject_id AS subject_id,
+        hadm_id AS hadm_id,
+        microevent_id AS microevent_id
+    )))                                 AS load_row_id,
     TO_JSON_STRING(STRUCT(
         subject_id AS subject_id,
         hadm_id AS hadm_id,
@@ -351,7 +385,7 @@ SELECT
     category                    AS category, 
     --
     'microbiologyevents'                AS load_table_id,
-    FARM_FINGERPRINT(GENERATE_UUID())   AS load_row_id,
+    FARM_FINGERPRINT(trace_id)          AS load_row_id,
     trace_id                            AS trace_id
 FROM
     d_micro
@@ -372,11 +406,12 @@ SELECT
     -- route                               AS route,
     --
     'pharmacy'                          AS load_table_id,
-    FARM_FINGERPRINT(GENERATE_UUID())   AS load_row_id,
+    FARM_FINGERPRINT(TO_JSON_STRING(STRUCT(
+        pharmacy_id AS pharmacy_id
+    )))                                 AS load_row_id,
     TO_JSON_STRING(STRUCT(
         pharmacy_id AS pharmacy_id
     ))                                  AS trace_id
 FROM
     @source_project.@hosp_dataset.pharmacy
 ;
-

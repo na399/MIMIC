@@ -19,7 +19,10 @@
         "@omop_schema": "omop",
         "@audit_schema": "audit",
         "@custom_mapping_dir": "custom_mapping_csv",
+        "@crosswalk_dir": "crosswalk_csv",
         "@waveform_dataset": "raw_waveform",
+        "@audit_min_percent_mapped": "0",
+        "@audit_min_percent_standard": "0",
 
         "@vocab_db_path": "data/vocab.duckdb",
         "@vocab_schema": "main",
@@ -27,7 +30,8 @@
         "@voc_dataset": "main",
         "@wf_project": "@duckdb_catalog",
         "@wf_dataset": "raw_waveform",
-        "@athena_export_path": "athena_export"
+        "@athena_export_path": "athena_export",
+        "@publish_materialize": "0"
     },
     "duckdb": {
         "database": "@duckdb_path",
@@ -44,6 +48,7 @@
         {"workflow": "custom_mapping", "type": "py", "conf": "workflow_custom_mapping.conf"},
         {"workflow": "etl", "type": "sql", "conf": "workflow_etl.conf"},
         {"workflow": "publish", "type": "sql", "conf": "workflow_publish.conf"},
+        {"workflow": "materialize", "type": "py", "conf": "workflow_materialize.conf"},
         {"workflow": "audit", "type": "sql", "conf": "workflow_audit.conf"}
     ]
 }

@@ -44,28 +44,50 @@ FROM
 -- -------------------------------------------------------------------
 
 CREATE OR REPLACE TABLE @etl_project.@etl_dataset.lk_pat_ethnicity_concept AS
-SELECT DISTINCT
-    src.ethnicity_first     AS source_code,
-    vc.concept_id           AS source_concept_id,
-    vc.vocabulary_id        AS source_vocabulary_id,
-    vc1.concept_id          AS target_concept_id,
-    vc1.vocabulary_id       AS target_vocabulary_id -- look here to distinguish Race and Ethnicity
-FROM
-    @etl_project.@etl_dataset.tmp_subject_ethnicity src
-LEFT JOIN
-    -- gcpt_ethnicity_to_concept -> mimiciv_per_ethnicity
-    @etl_project.@etl_dataset.voc_concept vc
-        ON UPPER(vc.concept_code) = UPPER(src.ethnicity_first) -- do the custom mapping
-        AND vc.domain_id IN ('Race', 'Ethnicity')
-LEFT JOIN
-    @etl_project.@etl_dataset.voc_concept_relationship cr1
-        ON  cr1.concept_id_1 = vc.concept_id
-        AND cr1.relationship_id = 'Maps to'
-LEFT JOIN
-    @etl_project.@etl_dataset.voc_concept vc1
-        ON  cr1.concept_id_2 = vc1.concept_id
-        AND vc1.invalid_reason IS NULL
-        AND vc1.standard_concept = 'S'
+WITH candidates AS (
+    SELECT
+        src.ethnicity_first     AS source_code,
+        vc.concept_id           AS source_concept_id,
+        vc.vocabulary_id        AS source_vocabulary_id,
+        vc1.concept_id          AS target_concept_id,
+        vc1.vocabulary_id       AS target_vocabulary_id -- distinguish Race vs Ethnicity
+    FROM
+        @etl_project.@etl_dataset.tmp_subject_ethnicity src
+    LEFT JOIN
+        -- gcpt_ethnicity_to_concept -> mimiciv_per_ethnicity
+        @etl_project.@etl_dataset.voc_concept vc
+            ON UPPER(vc.concept_code) = UPPER(src.ethnicity_first)
+            AND vc.domain_id IN ('Race', 'Ethnicity')
+    LEFT JOIN
+        @etl_project.@etl_dataset.voc_concept_relationship cr1
+            ON  cr1.concept_id_1 = vc.concept_id
+            AND cr1.relationship_id = 'Maps to'
+    LEFT JOIN
+        @etl_project.@etl_dataset.voc_concept vc1
+            ON  cr1.concept_id_2 = vc1.concept_id
+            AND vc1.invalid_reason IS NULL
+            AND vc1.standard_concept = 'S'
+),
+ranked AS (
+    SELECT
+        *,
+        ROW_NUMBER() OVER (
+            PARTITION BY source_code
+            ORDER BY
+                CASE WHEN target_concept_id IS NOT NULL THEN 1 ELSE 0 END DESC,
+                CASE WHEN source_vocabulary_id LIKE 'mimiciv%' THEN 1 ELSE 0 END DESC,
+                source_concept_id DESC
+        ) AS rn
+    FROM candidates
+)
+SELECT
+    source_code,
+    source_concept_id,
+    source_vocabulary_id,
+    target_concept_id,
+    target_vocabulary_id
+FROM ranked
+WHERE rn = 1
 ;
 
 -- -------------------------------------------------------------------
