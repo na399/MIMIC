@@ -215,6 +215,7 @@ def apply_ingest_defaults(etlconf: Dict[str, Any]) -> None:
     variables.setdefault("@ingest_all_varchar_flag", "")
     variables.setdefault("@ingest_drop_raw_flag", "")
     variables.setdefault("@ingest_keep_case_flag", "")
+    variables.setdefault("@ingest_skip_if_loaded_flag", "--skip-if-loaded")
 
 def apply_optimize_defaults(etlconf: Dict[str, Any]) -> None:
     variables = etlconf.setdefault("variables", {})

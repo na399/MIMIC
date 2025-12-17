@@ -494,3 +494,50 @@ class TestIngest(unittest.TestCase):
                 self.assertIn("TIMESTAMP", lab_dtype.upper())
             finally:
                 con.close()
+
+    def test_ingest_skip_if_loaded_skips_second_run(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            base = Path(td)
+            data_dir = base / "hosp"
+            data_dir.mkdir(parents=True, exist_ok=True)
+            (data_dir / "patients.csv").write_text(
+                "subject_id,gender,anchor_age,anchor_year,anchor_year_group\n1,M,30,2020,2000 - 2020\n",
+                encoding="utf-8",
+            )
+            db_path = base / "out.duckdb"
+
+            cmd = [
+                "python3",
+                str(self.repo_root / "scripts" / "ingest_mimic_csv_to_duckdb.py"),
+                "--database",
+                str(db_path),
+                "--hosp-dir",
+                str(data_dir),
+                "--raw-hosp-schema",
+                "raw_hosp",
+                "--include-tables",
+                "patients",
+                "--skip-if-loaded",
+            ]
+            res1 = subprocess.run(cmd, capture_output=True, text=True)
+            self.assertEqual(res1.returncode, 0, msg=res1.stderr)
+            con = duckdb.connect(str(db_path), read_only=True)
+            try:
+                self.assertEqual(con.execute("SELECT COUNT(*) FROM raw_hosp.patients").fetchone()[0], 1)
+                loads1 = con.execute(
+                    "SELECT COUNT(*) FROM ingest.file_loads WHERE raw_schema='raw_hosp' AND table_name='patients'"
+                ).fetchone()[0]
+                self.assertEqual(loads1, 1)
+            finally:
+                con.close()
+
+            res2 = subprocess.run(cmd, capture_output=True, text=True)
+            self.assertEqual(res2.returncode, 0, msg=res2.stderr)
+            con2 = duckdb.connect(str(db_path), read_only=True)
+            try:
+                loads2 = con2.execute(
+                    "SELECT COUNT(*) FROM ingest.file_loads WHERE raw_schema='raw_hosp' AND table_name='patients'"
+                ).fetchone()[0]
+                self.assertEqual(loads2, 1)
+            finally:
+                con2.close()

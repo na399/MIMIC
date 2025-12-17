@@ -8,6 +8,7 @@ DuckDB's ``read_csv_auto`` to materialize tables.
 import argparse
 import csv
 import json
+import os
 import re
 import tarfile
 import tempfile
@@ -23,6 +24,9 @@ import duckdb
 DEFAULT_MIMIC_DDL_PATH = (
     Path(__file__).resolve().parents[1] / "etl" / "mimic_ddl" / "mimiciv_hosp_icu_create_tables.sql"
 )
+
+INGEST_META_SCHEMA = "ingest"
+INGEST_META_TABLE = "file_loads"
 
 
 def discover_files(folder: Path) -> Iterable[Path]:
@@ -174,6 +178,160 @@ def sql_ident(value: str) -> str:
     return '"' + value.replace('"', '""') + '"'
 
 
+def ensure_ingest_registry(con: duckdb.DuckDBPyConnection) -> None:
+    con.execute(f"CREATE SCHEMA IF NOT EXISTS {sql_ident(INGEST_META_SCHEMA)}")
+    con.execute(
+        f"""
+        CREATE TABLE IF NOT EXISTS {sql_ident(INGEST_META_SCHEMA)}.{sql_ident(INGEST_META_TABLE)} (
+            raw_schema VARCHAR,
+            table_name VARCHAR,
+            source_path VARCHAR,
+            source_size BIGINT,
+            source_mtime_ns BIGINT,
+            source_crc32 BIGINT,
+            source_isize BIGINT,
+            mode VARCHAR,
+            row_limit BIGINT,
+            loaded_rows BIGINT,
+            loaded_at TIMESTAMP DEFAULT now()
+        )
+        """
+    )
+
+
+def get_table_estimated_rows(con: duckdb.DuckDBPyConnection, schema: str, table: str) -> int | None:
+    row = con.execute(
+        """
+        SELECT estimated_size
+        FROM duckdb_tables()
+        WHERE schema_name = ? AND table_name = ? AND internal = false
+        LIMIT 1
+        """,
+        [schema, table],
+    ).fetchone()
+    if row is None:
+        return None
+    try:
+        return int(row[0])
+    except Exception:
+        return None
+
+
+def get_source_fingerprint(path: Path) -> dict[str, int | str | None]:
+    st = path.stat()
+    fp: dict[str, int | str | None] = {
+        "source_path": str(path.resolve()),
+        "source_size": int(st.st_size),
+        "source_mtime_ns": int(getattr(st, "st_mtime_ns", int(st.st_mtime * 1_000_000_000))),
+        "source_crc32": None,
+        "source_isize": None,
+    }
+    if path.suffix.lower() == ".gz":
+        try:
+            with path.open("rb") as f:
+                f.seek(-8, os.SEEK_END)
+                trailer = f.read(8)
+            if len(trailer) == 8:
+                fp["source_crc32"] = int.from_bytes(trailer[0:4], "little", signed=False)
+                fp["source_isize"] = int.from_bytes(trailer[4:8], "little", signed=False)
+        except Exception:
+            pass
+    elif path.suffix.lower() == ".zip":
+        try:
+            with zipfile.ZipFile(path) as zf:
+                members = [m for m in zf.infolist() if not m.is_dir()]
+                if members:
+                    info = members[0]
+                    fp["source_crc32"] = int(getattr(info, "CRC", 0))
+                    fp["source_isize"] = int(getattr(info, "file_size", 0))
+        except Exception:
+            pass
+    return fp
+
+
+def record_file_load(
+    con: duckdb.DuckDBPyConnection,
+    *,
+    raw_schema: str,
+    table_name: str,
+    fp: dict[str, int | str | None],
+    mode: str,
+    row_limit: int | None,
+    loaded_rows: int | None,
+) -> None:
+    ensure_ingest_registry(con)
+    con.execute(
+        f"""
+        INSERT INTO {sql_ident(INGEST_META_SCHEMA)}.{sql_ident(INGEST_META_TABLE)} (
+            raw_schema, table_name, source_path, source_size, source_mtime_ns, source_crc32, source_isize,
+            mode, row_limit, loaded_rows
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        [
+            raw_schema,
+            table_name,
+            fp.get("source_path"),
+            fp.get("source_size"),
+            fp.get("source_mtime_ns"),
+            fp.get("source_crc32"),
+            fp.get("source_isize"),
+            mode,
+            int(row_limit) if row_limit is not None else None,
+            int(loaded_rows) if loaded_rows is not None else None,
+        ],
+    )
+
+
+def should_skip_load(
+    con: duckdb.DuckDBPyConnection,
+    *,
+    raw_schema: str,
+    table_name: str,
+    fp: dict[str, int | str | None],
+    mode: str,
+    row_limit: int | None,
+) -> bool:
+    ensure_ingest_registry(con)
+    row = con.execute(
+        f"""
+        SELECT source_size, source_mtime_ns, source_crc32, source_isize, mode, row_limit, loaded_rows
+        FROM {sql_ident(INGEST_META_SCHEMA)}.{sql_ident(INGEST_META_TABLE)}
+        WHERE raw_schema = ? AND table_name = ? AND source_path = ?
+        ORDER BY loaded_at DESC
+        LIMIT 1
+        """,
+        [raw_schema, table_name, fp.get("source_path")],
+    ).fetchone()
+    if row is None:
+        return False
+    prev_size, prev_mtime_ns, prev_crc32, prev_isize, prev_mode, prev_row_limit, prev_loaded_rows = row
+    if int(prev_size) != int(fp.get("source_size") or -1):
+        return False
+    if int(prev_mtime_ns) != int(fp.get("source_mtime_ns") or -1):
+        return False
+    if (prev_crc32 is None) != (fp.get("source_crc32") is None):
+        return False
+    if prev_crc32 is not None and int(prev_crc32) != int(fp.get("source_crc32") or -1):
+        return False
+    if (prev_isize is None) != (fp.get("source_isize") is None):
+        return False
+    if prev_isize is not None and int(prev_isize) != int(fp.get("source_isize") or -1):
+        return False
+    if str(prev_mode or "") != str(mode or ""):
+        return False
+    if (prev_row_limit is None) != (row_limit is None):
+        return False
+    if prev_row_limit is not None and int(prev_row_limit) != int(row_limit or 0):
+        return False
+    if prev_loaded_rows is None:
+        return False
+    current_rows = get_table_estimated_rows(con, raw_schema, table_name)
+    if current_rows is None:
+        return False
+    return int(current_rows) == int(prev_loaded_rows)
+
+
 def _split_sql_columns(column_block: str) -> List[str]:
     parts: List[str] = []
     buf: List[str] = []
@@ -307,6 +465,7 @@ def load_folder_using_ddl(
     include_tables: set[str] | None,
     all_varchar: bool,
     type_overrides: Dict[str, Dict[str, str]] | None,
+    skip_if_loaded: bool,
 ) -> None:
     con.execute(f"CREATE SCHEMA IF NOT EXISTS {sql_ident(schema)}")
     for file_path in discover_files(folder):
@@ -325,6 +484,15 @@ def load_folder_using_ddl(
 
         present = set(list_relations(con, schema))
         exists = table_name in present
+        fp = get_source_fingerprint(file_path)
+        if (
+            skip_if_loaded
+            and exists
+            and on_exists != "fail"
+            and should_skip_load(con, raw_schema=schema, table_name=table_name, fp=fp, mode=mode, row_limit=row_limit)
+        ):
+            print(f"Skipping {file_path} (already loaded: {schema}.{table_name})")
+            continue
         if exists:
             if on_exists == "skip":
                 print(f"Skipping existing {schema}.{table_name}")
@@ -370,6 +538,16 @@ def load_folder_using_ddl(
                 (HEADER, DELIM ',', QUOTE '\"', ESCAPE '\"')
                 """
             )
+            loaded_rows = get_table_estimated_rows(con, schema, table_name)
+            record_file_load(
+                con,
+                raw_schema=schema,
+                table_name=table_name,
+                fp=fp,
+                mode=mode,
+                row_limit=row_limit,
+                loaded_rows=loaded_rows,
+            )
             continue
 
         normalize_names = "TRUE" if lowercase else "FALSE"
@@ -393,6 +571,16 @@ def load_folder_using_ddl(
             {limit_clause}
             """
         )
+        loaded_rows = get_table_estimated_rows(con, schema, table_name)
+        record_file_load(
+            con,
+            raw_schema=schema,
+            table_name=table_name,
+            fp=fp,
+            mode=mode,
+            row_limit=row_limit,
+            loaded_rows=loaded_rows,
+        )
 
 
 def load_folder(
@@ -407,6 +595,7 @@ def load_folder(
     type_overrides: Dict[str, Dict[str, str]] | None = None,
     row_limit: int | None = None,
     include_tables: set[str] | None = None,
+    skip_if_loaded: bool = False,
 ) -> None:
     if not folder.exists():
         raise FileNotFoundError(folder)
@@ -421,9 +610,17 @@ def load_folder(
             table_name = table_name.lower()
         if include_tables is not None and table_name not in include_tables:
             continue
-        print(f"Loading {file_path} -> {schema}.{table_name}")
         present = set(list_relations(con, schema))
         exists = table_name in present
+        fp = get_source_fingerprint(file_path)
+        if (
+            skip_if_loaded
+            and exists
+            and on_exists != "fail"
+            and should_skip_load(con, raw_schema=schema, table_name=table_name, fp=fp, mode=mode, row_limit=row_limit)
+        ):
+            print(f"Skipping {file_path} (already loaded: {schema}.{table_name})")
+            continue
         if exists:
             if on_exists == "skip":
                 print(f"Skipping existing {schema}.{table_name}")
@@ -434,6 +631,7 @@ def load_folder(
                 raise RuntimeError(f"Cannot append into a view: {schema}.{table_name}")
             if on_exists == "replace":
                 drop_relation(con, schema, table_name)
+        print(f"Loading {file_path} -> {schema}.{table_name}")
         overrides = (type_overrides or {}).get(table_name) or {}
         columns_clause = f", COLUMNS={_columns_arg(overrides)}" if overrides else ""
         csv_expr = (
@@ -460,6 +658,16 @@ def load_folder(
                     f"COLUMNS={_columns_arg(columns)})"
                 )
                 con.execute(f"INSERT INTO {schema}.{table_name} SELECT * FROM {csv_expr_typed}{limit_clause}")
+            loaded_rows = get_table_estimated_rows(con, schema, table_name)
+            record_file_load(
+                con,
+                raw_schema=schema,
+                table_name=table_name,
+                fp=fp,
+                mode=mode,
+                row_limit=row_limit,
+                loaded_rows=loaded_rows,
+            )
             continue
 
         if mode == "copy":
@@ -473,6 +681,16 @@ def load_folder(
             )
         else:
             con.execute(f"CREATE OR REPLACE TABLE {schema}.{table_name} AS SELECT * FROM {csv_expr}{limit_clause}")
+        loaded_rows = get_table_estimated_rows(con, schema, table_name)
+        record_file_load(
+            con,
+            raw_schema=schema,
+            table_name=table_name,
+            fp=fp,
+            mode=mode,
+            row_limit=row_limit,
+            loaded_rows=loaded_rows,
+        )
 
 def list_tables(con: duckdb.DuckDBPyConnection, schema: str) -> List[str]:
     rows = con.execute(
@@ -582,6 +800,11 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Fallback to DuckDB CSV type inference instead of using the official DDL",
     )
+    parser.add_argument(
+        "--skip-if-loaded",
+        action="store_true",
+        help="Skip a CSV if the destination table already exists and matches a prior load record (fast reruns)",
+    )
     return parser.parse_args()
 
 
@@ -658,6 +881,7 @@ def main() -> int:
                 type_overrides=type_overrides,
                 row_limit=args.row_limit if args.row_limit and args.row_limit > 0 else None,
                 include_tables=include_tables,
+                skip_if_loaded=args.skip_if_loaded,
             )
         else:
             if ddl_schema not in ddl_defs:
@@ -676,6 +900,7 @@ def main() -> int:
                     type_overrides=type_overrides,
                     row_limit=args.row_limit if args.row_limit and args.row_limit > 0 else None,
                     include_tables=include_tables,
+                    skip_if_loaded=args.skip_if_loaded,
                 )
                 for alias_schema in schemas[1:]:
                     create_schema_views(con, canonical_schema, alias_schema)
@@ -693,6 +918,7 @@ def main() -> int:
                 include_tables=include_tables,
                 all_varchar=args.all_varchar,
                 type_overrides=type_overrides,
+                skip_if_loaded=args.skip_if_loaded,
             )
         for alias_schema in schemas[1:]:
             create_schema_views(con, canonical_schema, alias_schema)
