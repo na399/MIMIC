@@ -254,7 +254,7 @@ SELECT
     32821                                   AS type_concept_id, -- OMOP4976894 EHR billing record
     CAST(1 AS FLOAT64)                      AS quantity,
     CAST(NULL AS INT64)                     AS itemid,
-    src.hcpcs_cd                            AS source_code,
+    CAST(src.hcpcs_cd AS VARCHAR)           AS source_code,
     CAST(NULL AS STRING)                    AS source_label,
     lc.source_vocabulary_id                 AS source_vocabulary_id,
     lc.source_domain_id                     AS source_domain_id,

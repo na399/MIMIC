@@ -163,7 +163,7 @@ INNER JOIN
 
 CREATE OR REPLACE TABLE @etl_project.@etl_dataset.lk_meas_waveform_mapped AS
 SELECT
-    FARM_FINGERPRINT(GENERATE_UUID())       AS measurement_id,
+    CAST(nextval('@etl_dataset.seq_measurement_id') AS INTEGER) AS measurement_id,
     src.subject_id                          AS subject_id,
     hadm.hadm_id                            AS hadm_id,     -- get hadm_id by datetime period
     src.reference_id                        AS reference_id, -- make field unique for visit_detail_source_value
@@ -208,4 +208,3 @@ LEFT JOIN
         ON hadm.event_trace_id = src.trace_id
         AND hadm.row_num = 1
 ;
-

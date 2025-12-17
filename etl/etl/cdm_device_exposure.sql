@@ -27,25 +27,25 @@
 --HINT DISTRIBUTE_ON_KEY(person_id)
 CREATE OR REPLACE TABLE @etl_project.@etl_dataset.cdm_device_exposure
 (
-    device_exposure_id              INT64       not null ,
-    person_id                       INT64       not null ,
-    device_concept_id               INT64       not null ,
+    device_exposure_id              INTEGER     not null ,
+    person_id                       INTEGER     not null ,
+    device_concept_id               INTEGER     not null ,
     device_exposure_start_date      DATE        not null ,
-    device_exposure_start_datetime  DATETIME             ,
+    device_exposure_start_datetime  TIMESTAMP            ,
     device_exposure_end_date        DATE                 ,
-    device_exposure_end_datetime    DATETIME             ,
-    device_type_concept_id          INT64       not null ,
+    device_exposure_end_datetime    TIMESTAMP            ,
+    device_type_concept_id          INTEGER     not null ,
     unique_device_id                STRING               ,
-    quantity                        INT64                ,
-    provider_id                     INT64                ,
-    visit_occurrence_id             INT64                ,
-    visit_detail_id                 INT64                ,
+    quantity                        INTEGER              ,
+    provider_id                     INTEGER              ,
+    visit_occurrence_id             INTEGER              ,
+    visit_detail_id                 INTEGER              ,
     device_source_value             STRING               ,
-    device_source_concept_id        INT64                ,
+    device_source_concept_id        INTEGER              ,
     -- 
     unit_id                       STRING,
     load_table_id                 STRING,
-    load_row_id                   INT64,
+    load_row_id                   BIGINT,
     trace_id                      STRING
 )
 ;
@@ -53,7 +53,7 @@ CREATE OR REPLACE TABLE @etl_project.@etl_dataset.cdm_device_exposure
 
 INSERT INTO @etl_project.@etl_dataset.cdm_device_exposure
 SELECT
-    FARM_FINGERPRINT(GENERATE_UUID())           AS device_exposure_id,
+    CAST(nextval('@etl_dataset.seq_device_exposure_id') AS INTEGER) AS device_exposure_id,
     per.person_id                               AS person_id,
     src.target_concept_id                       AS device_concept_id,
     CAST(src.start_datetime AS DATE)            AS device_exposure_start_date,
@@ -62,12 +62,10 @@ SELECT
     src.end_datetime                            AS device_exposure_end_datetime,
     src.type_concept_id                         AS device_type_concept_id,
     CAST(NULL AS STRING)                        AS unique_device_id,
-    CAST(
-        IF(ROUND(src.quantity) = src.quantity, src.quantity, NULL)
-        AS INT64)                               AS quantity,
-    CAST(NULL AS INT64)                         AS provider_id,
+    CAST(IF(ROUND(src.quantity) = src.quantity, src.quantity, NULL) AS INTEGER) AS quantity,
+    CAST(NULL AS INTEGER)                       AS provider_id,
     vis.visit_occurrence_id                     AS visit_occurrence_id,
-    CAST(NULL AS INT64)                         AS visit_detail_id,
+    CAST(NULL AS INTEGER)                       AS visit_detail_id,
     src.source_code                             AS device_source_value,
     src.source_concept_id                       AS device_source_concept_id,
     -- 
@@ -91,7 +89,7 @@ WHERE
 
 INSERT INTO @etl_project.@etl_dataset.cdm_device_exposure
 SELECT
-    FARM_FINGERPRINT(GENERATE_UUID())           AS device_exposure_id,
+    CAST(nextval('@etl_dataset.seq_device_exposure_id') AS INTEGER) AS device_exposure_id,
     per.person_id                               AS person_id,
     src.target_concept_id                       AS device_concept_id,
     CAST(src.start_datetime AS DATE)            AS device_exposure_start_date,
@@ -100,12 +98,10 @@ SELECT
     src.start_datetime                          AS device_exposure_end_datetime,
     src.type_concept_id                         AS device_type_concept_id,
     CAST(NULL AS STRING)                        AS unique_device_id,
-    CAST(
-        IF(ROUND(src.value_as_number) = src.value_as_number, src.value_as_number, NULL)
-        AS INT64)                               AS quantity,
-    CAST(NULL AS INT64)                         AS provider_id,
+    CAST(IF(ROUND(src.value_as_number) = src.value_as_number, src.value_as_number, NULL) AS INTEGER) AS quantity,
+    CAST(NULL AS INTEGER)                       AS provider_id,
     vis.visit_occurrence_id                     AS visit_occurrence_id,
-    CAST(NULL AS INT64)                         AS visit_detail_id,
+    CAST(NULL AS INTEGER)                       AS visit_detail_id,
     src.source_code                             AS device_source_value,
     src.source_concept_id                       AS device_source_concept_id,
     -- 

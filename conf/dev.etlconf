@@ -1,85 +1,49 @@
 {
-    "comment": "draft configuration with design derived from CDMKit",
+    "comment": "DuckDB-first MIMIC-IV -> OMOP CDM v5.4 workflow",
+    "variables": {
+        "@duckdb_path": "data/mimiciv_demo.duckdb",
+        "@mimic_core_dir": "data/physionet.org/files/mimic-iv-demo/2.2/hosp",
+        "@mimic_hosp_dir": "data/physionet.org/files/mimic-iv-demo/2.2/hosp",
+        "@mimic_icu_dir": "data/physionet.org/files/mimic-iv-demo/2.2/icu",
+        "@mimic_derived_dir": "data/physionet.org/files/mimic-iv-demo/2.2/derived",
+        "@mimic_waveform_dir": "",
 
-    "variables": 
-    {
-        "@source_project":   "physionet-data",
-        "@core_dataset":     "mimic_demo_core",
-        "@hosp_dataset":     "mimic_demo_hosp",
-        "@icu_dataset":      "mimic_demo_icu",
+        "@source_project": "@duckdb_catalog",
+        "@core_dataset": "raw_core",
+        "@hosp_dataset": "raw_hosp",
+        "@icu_dataset": "raw_icu",
 
-        "@voc_project": "odysseus-mimic-dev",
-        "@voc_dataset": "vocabulary_2020_09_11",
+        "@etl_project": "@duckdb_catalog",
+        "@etl_dataset": "omop_cdm",
+        "@cdm_schema": "omop_cdm",
+        "@omop_schema": "omop",
+        "@audit_schema": "audit",
+        "@custom_mapping_dir": "custom_mapping_csv",
+        "@waveform_dataset": "raw_waveform",
 
-        "@wf_project": "odysseus-mimic-dev",
-        "@wf_dataset": "waveform_source_poc",
-
-        "@etl_project": "odysseus-mimic-dev",
-        "@etl_dataset": "mimiciv_demo_cdm_2021_04_19",
-
-        "@metrics_project": "odysseus-mimic-dev",
-        "@metrics_dataset": "mimiciv_demo_metrics_2021_04_19",
-
-        "@atlas_project": "odysseus-mimic-dev",
-        "@atlas_dataset": "mimiciv_demo_current_cdm_531",
-
-        "@waveforms_csv_path":  "gs://mimic_iv_to_omop/waveforms/source_data/csv"
-
+        "@vocab_db_path": "data/vocab.duckdb",
+        "@vocab_schema": "main",
+        "@voc_project": "vocab",
+        "@voc_dataset": "main",
+        "@wf_project": "@duckdb_catalog",
+        "@wf_dataset": "raw_waveform",
+        "@athena_export_path": "athena_export"
     },
-
-    "workflows":
-    [
-        {
-            "workflow": "ddl",
-            "comment": "use the same dataset templates as in etl section",
-            "type": "sql",
-            "conf": "workflow_ddl.conf"
-        },
-
-        {
-            "workflow": "staging",
-            "comment": "from the raw source tables to src_*, and from voc dataset to work dataset",
-            "type": "sql",
-            "conf": "workflow_staging.conf"
-        },
-
-        {
-            "workflow": "etl",
-            "type": "sql",
-            "conf": "workflow_etl.conf"
-        },
-
-        {
-            "workflow": "vocabulary_refresh",
-            "type": "py",
-            "conf": "workflow_vocabulary_refresh.conf"
-        },
-
-        {
-            "workflow": "ut", 
-            "type": "sql",
-            "conf": "workflow_ut.conf"
-        },
-
-        {
-            "workflow": "qa",
-            "type": "sql",
-            "conf": "workflow_qa.conf"
-        },
-
-        {
-            "workflow": "metrics",
-            "comment": "build metrics with metrics_gen scripts",
-            "type": "sql",
-            "conf": "workflow_metrics.conf"
-        },
-        {
-            "workflow": "gen_scripts",
-            "comment": "automation to generate similar queries for some tasks",
-            "type": "py",
-            "conf": "workflow_gen_scripts.conf"
-        }
-
-
+    "duckdb": {
+        "database": "@duckdb_path",
+        "attachments": [
+            {"path": "@vocab_db_path", "alias": "vocab", "read_only": true}
+        ],
+        "pre_sql": ["etl/duckdb/macros.sql"]
+    },
+    "workflows": [
+        {"workflow": "ingest_csv", "type": "py", "conf": "workflow_ingest_csv.conf"},
+        {"workflow": "vocabulary_refresh", "type": "py", "conf": "workflow_vocabulary_refresh.conf"},
+        {"workflow": "ddl", "type": "sql", "conf": "workflow_ddl.conf"},
+        {"workflow": "staging", "type": "sql", "conf": "workflow_staging.conf"},
+        {"workflow": "custom_mapping", "type": "py", "conf": "workflow_custom_mapping.conf"},
+        {"workflow": "etl", "type": "sql", "conf": "workflow_etl.conf"},
+        {"workflow": "publish", "type": "sql", "conf": "workflow_publish.conf"},
+        {"workflow": "audit", "type": "sql", "conf": "workflow_audit.conf"}
     ]
 }

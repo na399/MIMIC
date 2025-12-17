@@ -52,17 +52,17 @@ WHERE
 --HINT DISTRIBUTE_ON_KEY(person_id)
 CREATE OR REPLACE TABLE @etl_project.@etl_dataset.cdm_death
 (
-    person_id               INT64     not null ,
+    person_id               INTEGER   not null ,
     death_date              DATE      not null ,
-    death_datetime          DATETIME           ,
-    death_type_concept_id   INT64     not null ,
-    cause_concept_id        INT64              ,
+    death_datetime          TIMESTAMP          ,
+    death_type_concept_id   INTEGER   not null ,
+    cause_concept_id        INTEGER            ,
     cause_source_value      STRING             ,
-    cause_source_concept_id INT64              ,
+    cause_source_concept_id INTEGER            ,
     -- 
     unit_id                       STRING,
     load_table_id                 STRING,
-    load_row_id                   INT64,
+    load_row_id                   BIGINT,
     trace_id                      STRING
 )
 ;

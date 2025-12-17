@@ -176,7 +176,7 @@ GROUP BY
 
 CREATE OR REPLACE TABLE @etl_project.@etl_dataset.lk_visit_clean AS
 SELECT
-    FARM_FINGERPRINT(GENERATE_UUID())               AS visit_occurrence_id,
+    CAST(src.hadm_id AS INTEGER)                    AS visit_occurrence_id,
     src.subject_id                                  AS subject_id,
     src.hadm_id                                     AS hadm_id,
     CAST(NULL AS DATE)                              AS date_id,
@@ -198,9 +198,9 @@ FROM
     @etl_project.@etl_dataset.lk_admissions_clean src -- adm
 UNION ALL
 SELECT
-    FARM_FINGERPRINT(GENERATE_UUID())               AS visit_occurrence_id,
+    CAST(-nextval('@etl_dataset.seq_synthetic_visit_occurrence_id') AS INTEGER) AS visit_occurrence_id,
     src.subject_id                                  AS subject_id,
-    CAST(NULL AS INT64)                             AS hadm_id,
+    CAST(NULL AS INTEGER)                           AS hadm_id,
     src.date_id                                     AS date_id,
     src.start_datetime                              AS start_datetime,
     src.end_datetime                                AS end_datetime,
@@ -229,7 +229,7 @@ FROM
 
 CREATE OR REPLACE TABLE @etl_project.@etl_dataset.lk_visit_detail_clean AS
 SELECT
-    FARM_FINGERPRINT(GENERATE_UUID())               AS visit_detail_id,
+    CAST(src.transfer_id AS INTEGER)                AS visit_detail_id,
     src.subject_id                                  AS subject_id,
     src.hadm_id                                     AS hadm_id,
     src.date_id                                     AS date_id,
@@ -260,12 +260,12 @@ WHERE
 -- -------------------------------------------------------------------
 INSERT INTO @etl_project.@etl_dataset.lk_visit_detail_clean
 SELECT
-    FARM_FINGERPRINT(GENERATE_UUID())               AS visit_detail_id,
+    CAST(-nextval('@etl_dataset.seq_synthetic_visit_detail_id') AS INTEGER) AS visit_detail_id,
     src.subject_id                                  AS subject_id,
     src.hadm_id                                     AS hadm_id,
     CAST(src.start_datetime AS DATE)                AS date_id,
     src.start_datetime                              AS start_datetime,
-    CAST(NULL AS DATETIME)                          AS end_datetime,  -- if null, populate with next start_datetime
+    CAST(NULL AS TIMESTAMP)                         AS end_datetime,  -- if null, populate with next start_datetime
     CONCAT(
         CAST(src.subject_id AS STRING), '|',
         CAST(src.hadm_id AS STRING)
@@ -290,7 +290,7 @@ WHERE
 -- -------------------------------------------------------------------
 INSERT INTO @etl_project.@etl_dataset.lk_visit_detail_clean
 SELECT
-    FARM_FINGERPRINT(GENERATE_UUID())               AS visit_detail_id,
+    CAST(-nextval('@etl_dataset.seq_synthetic_visit_detail_id') AS INTEGER) AS visit_detail_id,
     src.subject_id                                  AS subject_id,
     src.hadm_id                                     AS hadm_id,
     CAST(src.start_datetime AS DATE)                AS date_id,
@@ -321,7 +321,7 @@ WHERE
 -- -------------------------------------------------------------------
 INSERT INTO @etl_project.@etl_dataset.lk_visit_detail_clean
 SELECT
-    FARM_FINGERPRINT(GENERATE_UUID())               AS visit_detail_id,
+    CAST(-nextval('@etl_dataset.seq_synthetic_visit_detail_id') AS INTEGER) AS visit_detail_id,
     src.subject_id                                  AS subject_id,
     src.hadm_id                                     AS hadm_id,
     src.date_id                                     AS date_id,

@@ -26,28 +26,28 @@
 --HINT DISTRIBUTE_ON_KEY(person_id)
 CREATE OR REPLACE TABLE @etl_project.@etl_dataset.cdm_observation
 (
-    observation_id                INT64     not null ,
-    person_id                     INT64     not null ,
-    observation_concept_id        INT64     not null ,
+    observation_id                INTEGER   not null ,
+    person_id                     INTEGER   not null ,
+    observation_concept_id        INTEGER   not null ,
     observation_date              DATE      not null ,
-    observation_datetime          DATETIME           ,
-    observation_type_concept_id   INT64     not null ,
+    observation_datetime          TIMESTAMP          ,
+    observation_type_concept_id   INTEGER   not null ,
     value_as_number               FLOAT64        ,
     value_as_string               STRING         ,
-    value_as_concept_id           INT64          ,
-    qualifier_concept_id          INT64          ,
-    unit_concept_id               INT64          ,
-    provider_id                   INT64          ,
-    visit_occurrence_id           INT64          ,
-    visit_detail_id               INT64          ,
+    value_as_concept_id           INTEGER        ,
+    qualifier_concept_id          INTEGER        ,
+    unit_concept_id               INTEGER        ,
+    provider_id                   INTEGER        ,
+    visit_occurrence_id           INTEGER        ,
+    visit_detail_id               INTEGER        ,
     observation_source_value      STRING         ,
-    observation_source_concept_id INT64          ,
+    observation_source_concept_id INTEGER        ,
     unit_source_value             STRING         ,
     qualifier_source_value        STRING         ,
     -- 
     unit_id                       STRING,
     load_table_id                 STRING,
-    load_row_id                   INT64,
+    load_row_id                   BIGINT,
     trace_id                      STRING
 )
 ;
@@ -59,7 +59,7 @@ CREATE OR REPLACE TABLE @etl_project.@etl_dataset.cdm_observation
 
 INSERT INTO @etl_project.@etl_dataset.cdm_observation
 SELECT
-    FARM_FINGERPRINT(GENERATE_UUID())           AS observation_id,
+    CAST(nextval('@etl_dataset.seq_observation_id') AS INTEGER) AS observation_id,
     per.person_id                               AS person_id,
     src.target_concept_id                       AS observation_concept_id,
     CAST(src.start_datetime AS DATE)            AS observation_date,
@@ -70,11 +70,11 @@ SELECT
     IF(src.value_as_string IS NOT NULL,
         COALESCE(src.value_as_concept_id, 0),
         NULL)                                   AS value_as_concept_id,
-    CAST(NULL AS INT64)                         AS qualifier_concept_id,
-    CAST(NULL AS INT64)                         AS unit_concept_id,
-    CAST(NULL AS INT64)                         AS provider_id,
+    CAST(NULL AS INTEGER)                       AS qualifier_concept_id,
+    CAST(NULL AS INTEGER)                       AS unit_concept_id,
+    CAST(NULL AS INTEGER)                       AS provider_id,
     vis.visit_occurrence_id                     AS visit_occurrence_id,
-    CAST(NULL AS INT64)                         AS visit_detail_id,
+    CAST(NULL AS INTEGER)                       AS visit_detail_id,
     src.source_code                             AS observation_source_value,
     src.source_concept_id                       AS observation_source_concept_id,
     CAST(NULL AS STRING)                        AS unit_source_value,
@@ -104,7 +104,7 @@ WHERE
 
 INSERT INTO @etl_project.@etl_dataset.cdm_observation
 SELECT
-    src.measurement_id                          AS observation_id, -- id is generated already
+    CAST(nextval('@etl_dataset.seq_observation_id') AS INTEGER) AS observation_id,
     per.person_id                               AS person_id,
     src.target_concept_id                       AS observation_concept_id,
     CAST(src.start_datetime AS DATE)            AS observation_date,
@@ -115,11 +115,11 @@ SELECT
     IF(src.value_source_value IS NOT NULL,
         COALESCE(src.value_as_concept_id, 0),
         NULL)                                   AS value_as_concept_id,
-    CAST(NULL AS INT64)                         AS qualifier_concept_id,
+    CAST(NULL AS INTEGER)                       AS qualifier_concept_id,
     src.unit_concept_id                         AS unit_concept_id,
-    CAST(NULL AS INT64)                         AS provider_id,
+    CAST(NULL AS INTEGER)                       AS provider_id,
     vis.visit_occurrence_id                     AS visit_occurrence_id,
-    CAST(NULL AS INT64)                         AS visit_detail_id,
+    CAST(NULL AS INTEGER)                       AS visit_detail_id,
     src.source_code                             AS observation_source_value,
     src.source_concept_id                       AS observation_source_concept_id,
     src.unit_source_value                       AS unit_source_value,
@@ -149,7 +149,7 @@ WHERE
 
 INSERT INTO @etl_project.@etl_dataset.cdm_observation
 SELECT
-    FARM_FINGERPRINT(GENERATE_UUID())           AS observation_id,
+    CAST(nextval('@etl_dataset.seq_observation_id') AS INTEGER) AS observation_id,
     per.person_id                               AS person_id,
     src.target_concept_id                       AS observation_concept_id,
     CAST(src.start_datetime AS DATE)            AS observation_date,
@@ -157,12 +157,12 @@ SELECT
     src.type_concept_id                         AS observation_type_concept_id,
     CAST(NULL AS FLOAT64)                       AS value_as_number,
     CAST(NULL AS STRING)                        AS value_as_string,
-    CAST(NULL AS INT64)                         AS value_as_concept_id,
-    CAST(NULL AS INT64)                         AS qualifier_concept_id,
-    CAST(NULL AS INT64)                         AS unit_concept_id,
-    CAST(NULL AS INT64)                         AS provider_id,
+    CAST(NULL AS INTEGER)                       AS value_as_concept_id,
+    CAST(NULL AS INTEGER)                       AS qualifier_concept_id,
+    CAST(NULL AS INTEGER)                       AS unit_concept_id,
+    CAST(NULL AS INTEGER)                       AS provider_id,
     vis.visit_occurrence_id                     AS visit_occurrence_id,
-    CAST(NULL AS INT64)                         AS visit_detail_id,
+    CAST(NULL AS INTEGER)                       AS visit_detail_id,
     src.source_code                             AS observation_source_value,
     src.source_concept_id                       AS observation_source_concept_id,
     CAST(NULL AS STRING)                        AS unit_source_value,
@@ -192,7 +192,7 @@ WHERE
 
 INSERT INTO @etl_project.@etl_dataset.cdm_observation
 SELECT
-    FARM_FINGERPRINT(GENERATE_UUID())           AS observation_id,
+    CAST(nextval('@etl_dataset.seq_observation_id') AS INTEGER) AS observation_id,
     per.person_id                               AS person_id,
     src.target_concept_id                       AS observation_concept_id, -- to rename fields in *_mapped
     CAST(src.start_datetime AS DATE)            AS observation_date,
@@ -200,12 +200,12 @@ SELECT
     src.type_concept_id                         AS observation_type_concept_id,
     CAST(NULL AS FLOAT64)                       AS value_as_number,
     CAST(NULL AS STRING)                        AS value_as_string,
-    CAST(NULL AS INT64)                         AS value_as_concept_id,
-    CAST(NULL AS INT64)                         AS qualifier_concept_id,
-    CAST(NULL AS INT64)                         AS unit_concept_id,
-    CAST(NULL AS INT64)                         AS provider_id,
+    CAST(NULL AS INTEGER)                       AS value_as_concept_id,
+    CAST(NULL AS INTEGER)                       AS qualifier_concept_id,
+    CAST(NULL AS INTEGER)                       AS unit_concept_id,
+    CAST(NULL AS INTEGER)                       AS provider_id,
     vis.visit_occurrence_id                     AS visit_occurrence_id,
-    CAST(NULL AS INT64)                         AS visit_detail_id,
+    CAST(NULL AS INTEGER)                       AS visit_detail_id,
     src.source_code                             AS observation_source_value,
     src.source_concept_id                       AS observation_source_concept_id,
     CAST(NULL AS STRING)                        AS unit_source_value,
@@ -235,7 +235,7 @@ WHERE
 
 INSERT INTO @etl_project.@etl_dataset.cdm_observation
 SELECT
-    FARM_FINGERPRINT(GENERATE_UUID())           AS observation_id,
+    CAST(nextval('@etl_dataset.seq_observation_id') AS INTEGER) AS observation_id,
     per.person_id                               AS person_id,
     src.target_concept_id                       AS observation_concept_id,
     CAST(src.start_datetime AS DATE)            AS observation_date,
@@ -243,12 +243,12 @@ SELECT
     src.type_concept_id                         AS observation_type_concept_id,
     CAST(NULL AS FLOAT64)                       AS value_as_number,
     CAST(NULL AS STRING)                        AS value_as_string,
-    CAST(NULL AS INT64)                         AS value_as_concept_id,
-    CAST(NULL AS INT64)                         AS qualifier_concept_id,
-    CAST(NULL AS INT64)                         AS unit_concept_id,
-    CAST(NULL AS INT64)                         AS provider_id,
+    CAST(NULL AS INTEGER)                       AS value_as_concept_id,
+    CAST(NULL AS INTEGER)                       AS qualifier_concept_id,
+    CAST(NULL AS INTEGER)                       AS unit_concept_id,
+    CAST(NULL AS INTEGER)                       AS provider_id,
     vis.visit_occurrence_id                     AS visit_occurrence_id,
-    CAST(NULL AS INT64)                         AS visit_detail_id,
+    CAST(NULL AS INTEGER)                       AS visit_detail_id,
     src.source_code                             AS observation_source_value,
     src.source_concept_id                       AS observation_source_concept_id,
     CAST(NULL AS STRING)                        AS unit_source_value,
@@ -271,4 +271,3 @@ INNER JOIN
 WHERE
     src.target_domain_id = 'Observation'
 ;
-

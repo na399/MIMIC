@@ -1,0 +1,2 @@
+microevent_id,hadm_id,subject_id,chartdate,charttime,spec_itemid,spec_type_desc,test_itemid,test_name,org_itemid,org_name,ab_itemid,ab_name,dilution_comparison,dilution_value,interpretation,is_positive
+1,10,1,2020-01-02,2020-01-02 01:00:00,1,BLOOD,2,Culture,100,E COLI,200,AMPICILLIN,=,1.0,S,1

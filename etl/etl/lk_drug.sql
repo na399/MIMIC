@@ -47,7 +47,7 @@ SELECT
     CAST(src.ndc AS STRING)     AS ndc_source_code, -- ndc was used for automatic/manual mapping,
     'NDC'                       AS ndc_source_vocabulary,
     src.form_val_disp           AS form_val_disp,
-    CAST(REGEXP_EXTRACT(src.form_val_disp, r'[-]?[\d]+[.]?[\d]*') AS FLOAT64)  AS quantity,
+    CAST(REGEXP_EXTRACT(CAST(src.form_val_disp AS STRING), r'[-]?[\d]+[.]?[\d]*') AS FLOAT64)  AS quantity,
     -- COALESCE(
     --     -- src.drug, src.drug_name_poe, src.drug_name_generic,'')
     --     src.drug, '')

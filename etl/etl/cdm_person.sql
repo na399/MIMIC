@@ -75,44 +75,44 @@ LEFT JOIN
 --HINT DISTRIBUTE_ON_KEY(person_id)
 CREATE OR REPLACE TABLE @etl_project.@etl_dataset.cdm_person
 (
-    person_id                   INT64     not null ,
-    gender_concept_id           INT64     not null ,
-    year_of_birth               INT64     not null ,
-    month_of_birth              INT64              ,
-    day_of_birth                INT64              ,
-    birth_datetime              DATETIME           ,
-    race_concept_id             INT64     not null,
-    ethnicity_concept_id        INT64     not null,
-    location_id                 INT64              ,
-    provider_id                 INT64              ,
-    care_site_id                INT64              ,
+    person_id                   INTEGER   not null ,
+    gender_concept_id           INTEGER   not null ,
+    year_of_birth               INTEGER   not null ,
+    month_of_birth              INTEGER            ,
+    day_of_birth                INTEGER            ,
+    birth_datetime              TIMESTAMP          ,
+    race_concept_id             INTEGER   not null,
+    ethnicity_concept_id        INTEGER   not null,
+    location_id                 INTEGER            ,
+    provider_id                 INTEGER            ,
+    care_site_id                INTEGER            ,
     person_source_value         STRING             ,
     gender_source_value         STRING             ,
-    gender_source_concept_id    INT64              ,
+    gender_source_concept_id    INTEGER            ,
     race_source_value           STRING             ,
-    race_source_concept_id      INT64              ,
+    race_source_concept_id      INTEGER            ,
     ethnicity_source_value      STRING             ,
-    ethnicity_source_concept_id INT64              ,
+    ethnicity_source_concept_id INTEGER            ,
     -- 
     unit_id                       STRING,
     load_table_id                 STRING,
-    load_row_id                   INT64,
+    load_row_id                   BIGINT,
     trace_id                      STRING
 )
 ;
 
 INSERT INTO @etl_project.@etl_dataset.cdm_person
 SELECT
-    FARM_FINGERPRINT(GENERATE_UUID()) AS person_id,
+    CAST(p.subject_id AS INTEGER)     AS person_id,
     CASE 
         WHEN p.gender = 'F' THEN 8532 -- FEMALE
         WHEN p.gender = 'M' THEN 8507 -- MALE
         ELSE 0 
     END                             AS gender_concept_id,
     p.anchor_year-p.anchor_age      AS year_of_birth,
-    CAST(NULL AS INT64)             AS month_of_birth,
-    CAST(NULL AS INT64)             AS day_of_birth,
-    CAST(NULL AS DATETIME)          AS birth_datetime,
+    CAST(NULL AS INTEGER)           AS month_of_birth,
+    CAST(NULL AS INTEGER)           AS day_of_birth,
+    CAST(NULL AS TIMESTAMP)         AS birth_datetime,
     COALESCE(
         CASE
             WHEN map_eth.target_vocabulary_id <> 'Ethnicity'
@@ -125,9 +125,9 @@ SELECT
                 THEN map_eth.target_concept_id
             ELSE NULL
         END, 0)                     AS ethnicity_concept_id,
-    CAST(NULL AS INT64)             AS location_id,
-    CAST(NULL AS INT64)             AS provider_id,
-    CAST(NULL AS INT64)             AS care_site_id,
+    CAST(NULL AS INTEGER)           AS location_id,
+    CAST(NULL AS INTEGER)           AS provider_id,
+    CAST(NULL AS INTEGER)           AS care_site_id,
     CAST(p.subject_id AS STRING)    AS person_source_value,
     p.gender                        AS gender_source_value,
     0                               AS gender_source_concept_id,

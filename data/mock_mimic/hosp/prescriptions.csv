@@ -1,0 +1,2 @@
+subject_id,hadm_id,pharmacy_id,starttime,stoptime,drug_type,drug,gsn,ndc,prod_strength,form_rx,dose_val_rx,dose_unit_rx,form_val_disp,form_unit_disp,doses_per_24_hrs,route
+1,10,1,2020-01-01 03:00:00,2020-01-05 03:00:00,MAIN,ASPIRIN,123456,12345-6789,81 MG,TABLET,1,tablet,1,tab,1,ORAL

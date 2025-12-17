@@ -48,23 +48,23 @@ GROUP BY
 
 CREATE OR REPLACE TABLE @etl_project.@etl_dataset.cdm_care_site
 (
-    care_site_id                  INT64       not null ,
+    care_site_id                  INTEGER     not null ,
     care_site_name                STRING               ,
-    place_of_service_concept_id   INT64                ,
-    location_id                   INT64                ,
+    place_of_service_concept_id   INTEGER             ,
+    location_id                   INTEGER             ,
     care_site_source_value        STRING               ,
     place_of_service_source_value STRING               ,
     -- 
     unit_id                       STRING,
     load_table_id                 STRING,
-    load_row_id                   INT64,
+    load_row_id                   BIGINT,
     trace_id                      STRING
 )
 ;
 
 INSERT INTO @etl_project.@etl_dataset.cdm_care_site
 SELECT
-    FARM_FINGERPRINT(GENERATE_UUID())   AS care_site_id,
+    CAST(ROW_NUMBER() OVER (ORDER BY src.source_code) AS INTEGER) AS care_site_id,
     src.source_code                     AS care_site_name,
     vc2.concept_id                      AS place_of_service_concept_id,
     1                                   AS location_id,  -- hard-coded BIDMC
@@ -90,4 +90,3 @@ LEFT JOIN
         AND vc2.standard_concept = 'S'
         AND vc2.invalid_reason IS NULL
 ;
-

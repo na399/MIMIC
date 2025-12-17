@@ -1,0 +1,48 @@
+{
+    "comment": "Mock data end-to-end pipeline for DuckDB",
+    "variables": {
+        "@duckdb_path": "data/mock_mimic.duckdb",
+        "@mimic_core_dir": "data/mock_mimic/core",
+        "@mimic_hosp_dir": "data/mock_mimic/hosp",
+        "@mimic_icu_dir": "data/mock_mimic/icu",
+        "@mimic_derived_dir": "data/mock_mimic/derived",
+        "@mimic_waveform_dir": "data/mock_mimic/waveform",
+
+        "@source_project": "@duckdb_catalog",
+        "@core_dataset": "raw_core",
+        "@hosp_dataset": "raw_hosp",
+        "@icu_dataset": "raw_icu",
+        "@waveform_dataset": "raw_waveform",
+
+        "@etl_project": "@duckdb_catalog",
+        "@etl_dataset": "omop_cdm",
+        "@cdm_schema": "omop_cdm",
+        "@omop_schema": "omop",
+        "@audit_schema": "audit",
+        "@custom_mapping_dir": "custom_mapping_csv",
+
+        "@vocab_db_path": "data/mock_vocab.duckdb",
+        "@vocab_schema": "main",
+        "@voc_project": "vocab",
+        "@voc_dataset": "main",
+        "@wf_project": "@duckdb_catalog",
+        "@wf_dataset": "raw_waveform",
+        "@athena_export_path": ""
+    },
+    "duckdb": {
+        "database": "@duckdb_path",
+        "attachments": [
+            {"path": "@vocab_db_path", "alias": "vocab", "read_only": true}
+        ],
+        "pre_sql": ["etl/duckdb/macros.sql"]
+    },
+    "workflows": [
+        {"workflow": "ingest_csv", "type": "py", "conf": "workflow_ingest_csv.conf"},
+        {"workflow": "ddl", "type": "sql", "conf": "workflow_ddl.conf"},
+        {"workflow": "staging", "type": "sql", "conf": "workflow_staging.conf"},
+        {"workflow": "custom_mapping", "type": "py", "conf": "workflow_custom_mapping.conf"},
+        {"workflow": "etl", "type": "sql", "conf": "workflow_etl.conf"},
+        {"workflow": "publish", "type": "sql", "conf": "workflow_publish.conf"},
+        {"workflow": "audit", "type": "sql", "conf": "workflow_audit.conf"}
+    ]
+}

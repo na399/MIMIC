@@ -1,0 +1,2 @@
+subject_id,hadm_id,stay_id,itemid,charttime,valuenum,value,valueuom
+1,10,100,220045,2020-01-01 07:00:00,1.23,note,unit

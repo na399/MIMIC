@@ -106,8 +106,7 @@ SELECT
 FROM
     @etl_project.@etl_dataset.lk_chartevents_clean
 GROUP BY
-    source_code,
-    source_label
+    value
 ;
 
 -- -------------------------------------------------------------------
@@ -155,7 +154,7 @@ DROP TABLE IF EXISTS @etl_project.@etl_dataset.tmp_chartevents_code_dist;
 
 CREATE OR REPLACE TABLE @etl_project.@etl_dataset.lk_chartevents_mapped AS
 SELECT
-    FARM_FINGERPRINT(GENERATE_UUID())           AS measurement_id,
+    CAST(nextval('@etl_dataset.seq_measurement_id') AS INTEGER) AS measurement_id,
     src.subject_id                              AS subject_id,
     src.hadm_id                                 AS hadm_id,
     src.stay_id                                 AS stay_id,
@@ -230,4 +229,3 @@ INNER JOIN
         AND c_main.source_vocabulary_id = 'mimiciv_meas_chartevents_value'
         AND c_main.target_domain_id = 'Condition'
 ;
-

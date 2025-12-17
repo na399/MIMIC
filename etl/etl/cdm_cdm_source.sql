@@ -35,7 +35,7 @@ CREATE OR REPLACE TABLE @etl_project.@etl_dataset.cdm_cdm_source
     -- 
     unit_id                       STRING,
     load_table_id                 STRING,
-    load_row_id                   INT64,
+    load_row_id                   BIGINT,
     trace_id                      STRING
 )
 ;
@@ -66,4 +66,3 @@ FROM
 WHERE
     v.vocabulary_id = 'None'
 ;
-

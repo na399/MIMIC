@@ -27,24 +27,24 @@
 --HINT DISTRIBUTE_ON_KEY(person_id)
 CREATE OR REPLACE TABLE @etl_project.@etl_dataset.cdm_procedure_occurrence
 (
-    procedure_occurrence_id     INT64     not null ,
-    person_id                   INT64     not null ,
-    procedure_concept_id        INT64     not null ,
+    procedure_occurrence_id     INTEGER   not null ,
+    person_id                   INTEGER   not null ,
+    procedure_concept_id        INTEGER   not null ,
     procedure_date              DATE      not null ,
-    procedure_datetime          DATETIME           ,
-    procedure_type_concept_id   INT64     not null ,
-    modifier_concept_id         INT64              ,
-    quantity                    INT64              ,
-    provider_id                 INT64              ,
-    visit_occurrence_id         INT64              ,
-    visit_detail_id             INT64              ,
+    procedure_datetime          TIMESTAMP          ,
+    procedure_type_concept_id   INTEGER   not null ,
+    modifier_concept_id         INTEGER            ,
+    quantity                    INTEGER            ,
+    provider_id                 INTEGER            ,
+    visit_occurrence_id         INTEGER            ,
+    visit_detail_id             INTEGER            ,
     procedure_source_value      STRING             ,
-    procedure_source_concept_id INT64              ,
+    procedure_source_concept_id INTEGER            ,
     modifier_source_value      STRING              ,
     -- 
     unit_id                       STRING,
     load_table_id                 STRING,
-    load_row_id                   INT64,
+    load_row_id                   BIGINT,
     trace_id                      STRING
 )
 ;
@@ -56,19 +56,22 @@ CREATE OR REPLACE TABLE @etl_project.@etl_dataset.cdm_procedure_occurrence
 
 INSERT INTO @etl_project.@etl_dataset.cdm_procedure_occurrence
 SELECT
-    FARM_FINGERPRINT(GENERATE_UUID())           AS procedure_occurrence_id,
+    CAST(nextval('@etl_dataset.seq_procedure_occurrence_id') AS INTEGER) AS procedure_occurrence_id,
     per.person_id                               AS person_id,
-    src.target_concept_id                       AS procedure_concept_id,
+    CASE
+        WHEN src.target_domain_id = 'Procedure' THEN COALESCE(src.target_concept_id, 0)
+        ELSE 0
+    END                                         AS procedure_concept_id,
     CAST(src.start_datetime AS DATE)            AS procedure_date,
     src.start_datetime                          AS procedure_datetime,
     src.type_concept_id                         AS procedure_type_concept_id,
     0                                           AS modifier_concept_id,
-    CAST(src.quantity AS INT64)                 AS quantity,
-    CAST(NULL AS INT64)                         AS provider_id,
+    CAST(src.quantity AS INTEGER)               AS quantity,
+    CAST(NULL AS INTEGER)                       AS provider_id,
     vis.visit_occurrence_id                     AS visit_occurrence_id,
-    CAST(NULL AS INT64)                         AS visit_detail_id,
+    CAST(NULL AS INTEGER)                       AS visit_detail_id,
     src.source_code                             AS procedure_source_value,
-    src.source_concept_id                       AS procedure_source_concept_id,
+    COALESCE(src.source_concept_id, 0)          AS procedure_source_concept_id,
     CAST(NULL AS STRING)                        AS modifier_source_value,
     -- 
     CONCAT('procedure.', src.unit_id)           AS unit_id,
@@ -84,8 +87,6 @@ INNER JOIN
     @etl_project.@etl_dataset.cdm_visit_occurrence vis
         ON  vis.visit_source_value = 
             CONCAT(CAST(src.subject_id AS STRING), '|', CAST(src.hadm_id AS STRING))
-WHERE
-    src.target_domain_id = 'Procedure'
 ;
 
 -- -------------------------------------------------------------------
@@ -95,17 +96,17 @@ WHERE
 
 INSERT INTO @etl_project.@etl_dataset.cdm_procedure_occurrence
 SELECT
-    FARM_FINGERPRINT(GENERATE_UUID())           AS procedure_occurrence_id,
+    CAST(nextval('@etl_dataset.seq_procedure_occurrence_id') AS INTEGER) AS procedure_occurrence_id,
     per.person_id                               AS person_id,
     src.target_concept_id                       AS procedure_concept_id,
     CAST(src.start_datetime AS DATE)            AS procedure_date,
     src.start_datetime                          AS procedure_datetime,
     src.type_concept_id                         AS procedure_type_concept_id,
     0                                           AS modifier_concept_id,
-    CAST(NULL AS INT64)                         AS quantity,
-    CAST(NULL AS INT64)                         AS provider_id,
+    CAST(NULL AS INTEGER)                       AS quantity,
+    CAST(NULL AS INTEGER)                       AS provider_id,
     vis.visit_occurrence_id                     AS visit_occurrence_id,
-    CAST(NULL AS INT64)                         AS visit_detail_id,
+    CAST(NULL AS INTEGER)                       AS visit_detail_id,
     src.source_code                             AS procedure_source_value,
     src.source_concept_id                       AS procedure_source_concept_id,
     CAST(NULL AS STRING)                        AS modifier_source_value,
@@ -134,17 +135,17 @@ WHERE
 
 INSERT INTO @etl_project.@etl_dataset.cdm_procedure_occurrence
 SELECT
-    FARM_FINGERPRINT(GENERATE_UUID())           AS procedure_occurrence_id,
+    CAST(nextval('@etl_dataset.seq_procedure_occurrence_id') AS INTEGER) AS procedure_occurrence_id,
     per.person_id                               AS person_id,
     src.target_concept_id                       AS procedure_concept_id,
     CAST(src.start_datetime AS DATE)            AS procedure_date,
     src.start_datetime                          AS procedure_datetime,
     src.type_concept_id                         AS procedure_type_concept_id,
     0                                           AS modifier_concept_id,
-    CAST(NULL AS INT64)                         AS quantity,
-    CAST(NULL AS INT64)                         AS provider_id,
+    CAST(NULL AS INTEGER)                       AS quantity,
+    CAST(NULL AS INTEGER)                       AS provider_id,
     vis.visit_occurrence_id                     AS visit_occurrence_id,
-    CAST(NULL AS INT64)                         AS visit_detail_id,
+    CAST(NULL AS INTEGER)                       AS visit_detail_id,
     src.source_code                             AS procedure_source_value,
     src.source_concept_id                       AS procedure_source_concept_id,
     CAST(NULL AS STRING)                        AS modifier_source_value,
@@ -175,17 +176,17 @@ WHERE
 
 INSERT INTO @etl_project.@etl_dataset.cdm_procedure_occurrence
 SELECT
-    FARM_FINGERPRINT(GENERATE_UUID())           AS procedure_occurrence_id,
+    CAST(nextval('@etl_dataset.seq_procedure_occurrence_id') AS INTEGER) AS procedure_occurrence_id,
     per.person_id                               AS person_id,
     src.target_concept_id                       AS procedure_concept_id,
     CAST(src.start_datetime AS DATE)            AS procedure_date,
     src.start_datetime                          AS procedure_datetime,
     src.type_concept_id                         AS procedure_type_concept_id,
     0                                           AS modifier_concept_id,
-    CAST(NULL AS INT64)                         AS quantity,
-    CAST(NULL AS INT64)                         AS provider_id,
+    CAST(NULL AS INTEGER)                       AS quantity,
+    CAST(NULL AS INTEGER)                       AS provider_id,
     vis.visit_occurrence_id                     AS visit_occurrence_id,
-    CAST(NULL AS INT64)                         AS visit_detail_id,
+    CAST(NULL AS INTEGER)                       AS visit_detail_id,
     src.source_code                             AS procedure_source_value,
     src.source_concept_id                       AS procedure_source_concept_id,
     CAST(NULL AS STRING)                        AS modifier_source_value,
@@ -206,4 +207,3 @@ INNER JOIN
 WHERE
     src.target_domain_id = 'Procedure'
 ;
-

@@ -149,22 +149,22 @@ FROM
 
 CREATE OR REPLACE TABLE @etl_project.@etl_dataset.src_hcpcsevents AS
 SELECT
-    hadm_id                             AS hadm_id,
-    subject_id                          AS subject_id,
-    hcpcs_cd                            AS hcpcs_cd,
-    seq_num                             AS seq_num,
-    short_description                   AS short_description,
+    src.hadm_id                         AS hadm_id,
+    src.subject_id                      AS subject_id,
+    src.hcpcs_cd                        AS hcpcs_cd,
+    src.seq_num                         AS seq_num,
+    src.short_description               AS short_description,
     --
     'hcpcsevents'                       AS load_table_id,
     FARM_FINGERPRINT(GENERATE_UUID())   AS load_row_id,
     TO_JSON_STRING(STRUCT(
-        subject_id AS subject_id,
-        hadm_id AS hadm_id,
-        hcpcs_cd AS hcpcs_cd,
-        seq_num AS seq_num
+        src.subject_id AS subject_id,
+        src.hadm_id AS hadm_id,
+        src.hcpcs_cd AS hcpcs_cd,
+        src.seq_num AS seq_num
     ))                                  AS trace_id -- this set of fields is not unique. To set quantity?
 FROM
-    @source_project.@hosp_dataset.hcpcsevents
+    @source_project.@hosp_dataset.hcpcsevents src
 ;
 
 
@@ -174,20 +174,20 @@ FROM
 
 CREATE OR REPLACE TABLE @etl_project.@etl_dataset.src_drgcodes AS
 SELECT
-    hadm_id                             AS hadm_id,
-    subject_id                          AS subject_id,
-    drg_code                            AS drg_code,
-    description                         AS description,
+    src.hadm_id                         AS hadm_id,
+    src.subject_id                      AS subject_id,
+    src.drg_code                        AS drg_code,
+    src.description                     AS description,
     --
     'drgcodes'                       AS load_table_id,
     FARM_FINGERPRINT(GENERATE_UUID())   AS load_row_id,
     TO_JSON_STRING(STRUCT(
-        subject_id AS subject_id,
-        hadm_id AS hadm_id,
-        COALESCE(drg_code, '') AS drg_code
+        src.subject_id AS subject_id,
+        src.hadm_id AS hadm_id,
+        COALESCE(src.drg_code, '') AS drg_code
     ))                                  AS trace_id -- this set of fields is not unique.
 FROM
-    @source_project.@hosp_dataset.drgcodes
+    @source_project.@hosp_dataset.drgcodes src
 ;
 
 -- -------------------------------------------------------------------

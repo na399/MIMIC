@@ -1,0 +1,2 @@
+hadm_id,subject_id,admittime,dischtime,deathtime,admission_type,admission_location,discharge_location,race,edregtime,insurance,marital_status,language
+10,1,2020-01-01 00:00:00,2020-01-02 00:00:00,2020-01-03 00:00:00,EMERGENCY,EMERGENCY ROOM,HOME,WHITE,2020-01-01 00:00:00,Private,SINGLE,EN

@@ -1,0 +1,2 @@
+transfer_id,hadm_id,subject_id,careunit,intime,outtime,eventtype,prev_service,curr_service
+100,10,1,CARDIOLOGY,2020-01-01 01:00:00,2020-01-01 02:00:00,transfer,MED,SURG

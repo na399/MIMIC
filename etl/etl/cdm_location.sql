@@ -23,7 +23,7 @@
 
 CREATE OR REPLACE TABLE @etl_project.@etl_dataset.cdm_location
 (
-    location_id           INT64     not null ,
+    location_id           INTEGER   not null ,
     address_1             STRING             ,
     address_2             STRING             ,
     city                  STRING             ,
@@ -34,7 +34,7 @@ CREATE OR REPLACE TABLE @etl_project.@etl_dataset.cdm_location
     -- 
     unit_id                       STRING,
     load_table_id                 STRING,
-    load_row_id                   INT64,
+    load_row_id                   BIGINT,
     trace_id                      STRING
 )
 ;

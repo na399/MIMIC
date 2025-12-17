@@ -39,27 +39,27 @@
 --HINT DISTRIBUTE_ON_KEY(person_id)
 CREATE OR REPLACE TABLE @etl_project.@etl_dataset.cdm_visit_occurrence
 (
-    visit_occurrence_id           INT64     not null ,
-    person_id                     INT64     not null ,
-    visit_concept_id              INT64     not null ,
+    visit_occurrence_id           INTEGER   not null ,
+    person_id                     INTEGER   not null ,
+    visit_concept_id              INTEGER   not null ,
     visit_start_date              DATE      not null ,
-    visit_start_datetime          DATETIME           ,
+    visit_start_datetime          TIMESTAMP          ,
     visit_end_date                DATE      not null ,
-    visit_end_datetime            DATETIME           ,
-    visit_type_concept_id         INT64     not null ,
-    provider_id                   INT64              ,
-    care_site_id                  INT64              ,
+    visit_end_datetime            TIMESTAMP          ,
+    visit_type_concept_id         INTEGER   not null ,
+    provider_id                   INTEGER            ,
+    care_site_id                  INTEGER            ,
     visit_source_value            STRING             ,
-    visit_source_concept_id       INT64              ,
-    admitting_source_concept_id   INT64              ,
+    visit_source_concept_id       INTEGER            ,
+    admitting_source_concept_id   INTEGER            ,
     admitting_source_value        STRING             ,
-    discharge_to_concept_id       INT64              ,
+    discharge_to_concept_id       INTEGER            ,
     discharge_to_source_value     STRING             ,
-    preceding_visit_occurrence_id INT64              ,
+    preceding_visit_occurrence_id INTEGER            ,
     -- 
     unit_id                       STRING,
     load_table_id                 STRING,
-    load_row_id                   INT64,
+    load_row_id                   BIGINT,
     trace_id                      STRING
 )
 ;
@@ -74,7 +74,7 @@ SELECT
     CAST(src.end_datetime AS DATE)          AS visit_end_date,
     src.end_datetime                        AS visit_end_datetime,
     32817                                   AS visit_type_concept_id,   -- EHR   Type Concept    Standard                          
-    CAST(NULL AS INT64)                     AS provider_id,
+    CAST(NULL AS INTEGER)                   AS provider_id,
     cs.care_site_id                         AS care_site_id,
     src.source_value                        AS visit_source_value, -- it should be an ID for visits
     COALESCE(lat.source_concept_id, 0)      AS visit_source_concept_id, -- it is where visit_concept_id comes from

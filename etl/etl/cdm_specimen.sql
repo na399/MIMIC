@@ -29,16 +29,16 @@
 --HINT DISTRIBUTE_ON_KEY(person_id)
 CREATE OR REPLACE TABLE @etl_project.@etl_dataset.cdm_specimen
 (
-    specimen_id                 INT64     not null ,
-    person_id                   INT64     not null ,
-    specimen_concept_id         INT64     not null ,
-    specimen_type_concept_id    INT64     not null ,
+    specimen_id                 INTEGER   not null ,
+    person_id                   INTEGER   not null ,
+    specimen_concept_id         INTEGER   not null ,
+    specimen_type_concept_id    INTEGER   not null ,
     specimen_date               DATE      not null ,
-    specimen_datetime           DATETIME           ,
+    specimen_datetime           TIMESTAMP          ,
     quantity                    FLOAT64            ,
-    unit_concept_id             INT64              ,
-    anatomic_site_concept_id    INT64              ,
-    disease_status_concept_id   INT64              ,
+    unit_concept_id             INTEGER            ,
+    anatomic_site_concept_id    INTEGER            ,
+    disease_status_concept_id   INTEGER            ,
     specimen_source_id          STRING             ,
     specimen_source_value       STRING             ,
     unit_source_value           STRING             ,
@@ -47,7 +47,7 @@ CREATE OR REPLACE TABLE @etl_project.@etl_dataset.cdm_specimen
     -- 
     unit_id                       STRING,
     load_table_id                 STRING,
-    load_row_id                   INT64,
+    load_row_id                   BIGINT,
     trace_id                      STRING
 )
 ;
@@ -62,7 +62,7 @@ SELECT
     CAST(src.start_datetime AS DATE)            AS specimen_date,
     src.start_datetime                          AS specimen_datetime,
     CAST(NULL AS FLOAT64)                       AS quantity,
-    CAST(NULL AS INT64)                         AS unit_concept_id,
+    CAST(NULL AS INTEGER)                       AS unit_concept_id,
     0                                           AS anatomic_site_concept_id,
     0                                           AS disease_status_concept_id,
     src.trace_id                                AS specimen_source_id,

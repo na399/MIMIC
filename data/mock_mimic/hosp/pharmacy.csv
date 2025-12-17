@@ -1,0 +1,2 @@
+subject_id,hadm_id,pharmacy_id,medication,route,starttime,endtime,dose_val_rx,dose_unit_rx
+1,10,1,ASPIRIN,ORAL,2020-01-01 03:00:00,2020-01-05 03:00:00,1,tablet

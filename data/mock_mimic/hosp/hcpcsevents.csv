@@ -1,0 +1,2 @@
+subject_id,hadm_id,hcpcs_cd,seq_num,short_description,ticket_id_seq
+1,10,99281,1,Emergency visit,1

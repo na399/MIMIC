@@ -90,7 +90,7 @@ CREATE OR REPLACE TABLE @etl_project.@etl_dataset.tmp_enddates_condition
 AS SELECT
     person_id                                       AS person_id,
     condition_concept_id                            AS condition_concept_id,
-    DATE_SUB (event_date, INTERVAL 30 DAY)          AS end_date  -- unpad the end date
+    event_date - INTERVAL 30 DAY                    AS end_date  -- unpad the end date
 FROM
     @etl_project.@etl_dataset.tmp_dates_rows_condition e
 WHERE
@@ -124,16 +124,16 @@ GROUP BY
 --HINT DISTRIBUTE_ON_KEY(person_id)
 CREATE OR REPLACE TABLE @etl_project.@etl_dataset.cdm_condition_era
 (
-    condition_era_id            INT64     not null ,
-    person_id                   INT64     not null ,
-    condition_concept_id        INT64     not null ,
+    condition_era_id            INTEGER   not null ,
+    person_id                   INTEGER   not null ,
+    condition_concept_id        INTEGER   not null ,
     condition_era_start_date    DATE      not null ,
     condition_era_end_date      DATE      not null ,
-    condition_occurrence_count  INT64              ,
+    condition_occurrence_count  INTEGER            ,
     -- 
     unit_id                       STRING,
     load_table_id                 STRING,
-    load_row_id                   INT64
+    load_row_id                   BIGINT
 )
 ;
 
@@ -145,16 +145,16 @@ CREATE OR REPLACE TABLE @etl_project.@etl_dataset.cdm_condition_era
 -- -------------------------------------------------------------------
 INSERT INTO @etl_project.@etl_dataset.cdm_condition_era
 SELECT
-    FARM_FINGERPRINT(GENERATE_UUID())               AS condition_era_id,
+    CAST(nextval('@etl_dataset.seq_condition_era_id') AS INTEGER) AS condition_era_id,
     person_id                                       AS person_id,
     condition_concept_id                            AS condition_concept_id,
     MIN(condition_start_date)                       AS condition_era_start_date,
     era_end_date                                    AS condition_era_end_date,
-    COUNT(*)                                        AS condition_occurrence_count,
+    CAST(COUNT(*) AS INTEGER)                       AS condition_occurrence_count,
 -- --
     'condition_era.condition_occurrence'            AS unit_id,
     CAST(NULL AS STRING)                            AS load_table_id,
-    CAST(NULL AS INT64)                             AS load_row_id
+    CAST(NULL AS BIGINT)                            AS load_row_id
 FROM
     @etl_project.@etl_dataset.tmp_conditionends
 GROUP BY

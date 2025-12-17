@@ -154,22 +154,22 @@ GROUP BY
 --HINT DISTRIBUTE_ON_KEY(person_id)
 CREATE OR REPLACE TABLE @etl_project.@etl_dataset.cdm_observation_period
 (
-    observation_period_id             INT64   not null ,
-    person_id                         INT64   not null ,
+    observation_period_id             INTEGER not null ,
+    person_id                         INTEGER not null ,
     observation_period_start_date     DATE    not null ,
     observation_period_end_date       DATE    not null ,
-    period_type_concept_id            INT64   not null ,
+    period_type_concept_id            INTEGER not null ,
     -- 
     unit_id                       STRING,
     load_table_id                 STRING,
-    load_row_id                   INT64,
+    load_row_id                   BIGINT,
     trace_id                      STRING
 )
 ;
 
 INSERT INTO @etl_project.@etl_dataset.cdm_observation_period
 SELECT
-    FARM_FINGERPRINT(GENERATE_UUID())           AS observation_period_id,
+    src.person_id                               AS observation_period_id,
     src.person_id                               AS person_id,
     MIN(src.start_date)                         AS observation_period_start_date,
     MAX(src.end_date)                           AS observation_period_end_date,

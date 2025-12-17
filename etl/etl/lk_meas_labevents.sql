@@ -66,14 +66,14 @@ FROM
 
 CREATE OR REPLACE TABLE @etl_project.@etl_dataset.lk_meas_labevents_clean AS
 SELECT
-    FARM_FINGERPRINT(GENERATE_UUID())       AS measurement_id,
+    CAST(nextval('@etl_dataset.seq_measurement_id') AS INTEGER) AS measurement_id,
     src.subject_id                          AS subject_id,
     src.charttime                           AS start_datetime, -- measurement_datetime,
     src.hadm_id                             AS hadm_id,
     src.itemid                              AS itemid,
-    src.value                               AS value, -- value_source_value
-    REGEXP_EXTRACT(src.value, r'^(\<=|\>=|\>|\<|=|)')   AS value_operator,
-    REGEXP_EXTRACT(src.value, r'[-]?[\d]+[.]?[\d]*')    AS value_number, -- assume "-0.34 etc"
+    CAST(src.value AS VARCHAR)              AS value, -- value_source_value
+    REGEXP_EXTRACT(CAST(src.value AS VARCHAR), '^(\<=|\>=|\>|\<|=|)')   AS value_operator,
+    REGEXP_EXTRACT(CAST(src.value AS VARCHAR), '[-]?[\d]+[.]?[\d]*')    AS value_number, -- assume "-0.34 etc"
     IF(TRIM(src.valueuom) <> '', src.valueuom, NULL)    AS valueuom, -- unit_source_value,
     src.ref_range_lower                     AS ref_range_lower,
     src.ref_range_upper                     AS ref_range_upper,

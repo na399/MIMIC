@@ -166,8 +166,7 @@ AS SELECT
     drug_sub_exposure_start_date            AS drug_sub_exposure_start_date,
     drug_sub_exposure_end_date              AS drug_sub_exposure_end_date,
     drug_exposure_count                     AS drug_exposure_count,
-    DATE_DIFF( drug_sub_exposure_end_date,
-              drug_sub_exposure_start_date, DAY) AS days_exposed
+    datediff('day', drug_sub_exposure_start_date, drug_sub_exposure_end_date) AS days_exposed
 FROM
     @etl_project.@etl_dataset.tmp_sub_drug
 ;
@@ -191,7 +190,7 @@ UNION ALL
     SELECT
         person_id                                                       AS person_id,
         ingredient_concept_id                                           AS ingredient_concept_id,
-        DATE_ADD (drug_sub_exposure_end_date, INTERVAL 30 DAY)          AS event_date,
+        drug_sub_exposure_end_date + INTERVAL 30 DAY                    AS event_date,
         1                                                               AS event_type,
         NULL                                                            AS start_ordinal
     FROM
@@ -230,7 +229,7 @@ CREATE OR REPLACE TABLE @etl_project.@etl_dataset.tmp_enddates_drug
 AS SELECT
     person_id                                       AS person_id,
     ingredient_concept_id                           AS ingredient_concept_id,
-    DATE_SUB (event_date, INTERVAL 30 DAY)          AS end_date  -- unpad the end date
+    event_date - INTERVAL 30 DAY                    AS end_date  -- unpad the end date
 FROM
     @etl_project.@etl_dataset.tmp_enddates_rows_drug e
 WHERE
@@ -267,17 +266,17 @@ GROUP BY
 --HINT DISTRIBUTE_ON_KEY(person_id)
 CREATE OR REPLACE TABLE @etl_project.@etl_dataset.cdm_drug_era
 (
-    drug_era_id         INT64     not null ,
-    person_id           INT64     not null ,
-    drug_concept_id     INT64     not null ,
+    drug_era_id         INTEGER   not null ,
+    person_id           INTEGER   not null ,
+    drug_concept_id     INTEGER   not null ,
     drug_era_start_date DATE      not null ,
     drug_era_end_date   DATE      not null ,
-    drug_exposure_count INT64              ,
-    gap_days            INT64              ,
+    drug_exposure_count INTEGER            ,
+    gap_days            INTEGER            ,
     -- 
     unit_id                       STRING,
     load_table_id                 STRING,
-    load_row_id                   INT64
+    load_row_id                   BIGINT
 )
 ;
 
@@ -286,18 +285,17 @@ CREATE OR REPLACE TABLE @etl_project.@etl_dataset.cdm_drug_era
 -- -------------------------------------------------------------------
 INSERT INTO @etl_project.@etl_dataset.cdm_drug_era
 SELECT
-    FARM_FINGERPRINT(GENERATE_UUID())                                   AS drug_era_id,
+    CAST(nextval('@etl_dataset.seq_drug_era_id') AS INTEGER)             AS drug_era_id,
     person_id                                                           AS person_id,
     ingredient_concept_id                                               AS drug_concept_id,
     MIN (drug_sub_exposure_start_date)                                  AS drug_era_start_date,
     drug_era_end_date                                                   AS drug_era_end_date,
-    SUM(drug_exposure_count)                                            AS drug_exposure_count,
-    DATE_DIFF( drug_era_end_date,
-              MIN(drug_sub_exposure_start_date), DAY) - SUM(days_exposed)    AS gap_days,
+    CAST(SUM(drug_exposure_count) AS INTEGER)                            AS drug_exposure_count,
+    CAST(datediff('day', MIN(drug_sub_exposure_start_date), drug_era_end_date) - SUM(days_exposed) AS INTEGER) AS gap_days,
 -- --
     'drug_era.drug_exposure'                                            AS unit_id,
     CAST(NULL AS STRING)                                                AS load_table_id,
-    CAST(NULL AS INT64)                                                 AS load_row_id
+    CAST(NULL AS BIGINT)                                                AS load_row_id
 FROM
     @etl_project.@etl_dataset.tmp_drugera_ends_drug
 GROUP BY

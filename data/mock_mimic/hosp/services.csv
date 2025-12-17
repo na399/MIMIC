@@ -1,0 +1,2 @@
+subject_id,hadm_id,transfertime,prev_service,curr_service
+1,10,2020-01-01 00:30:00,CMED,SURG

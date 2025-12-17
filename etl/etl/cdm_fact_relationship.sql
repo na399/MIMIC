@@ -12,11 +12,11 @@
 
 CREATE OR REPLACE TABLE @etl_project.@etl_dataset.cdm_fact_relationship
 (
-    domain_concept_id_1     INT64     not null ,
-    fact_id_1               INT64     not null ,
-    domain_concept_id_2     INT64     not null ,
-    fact_id_2               INT64     not null ,
-    relationship_concept_id INT64     not null ,
+    domain_concept_id_1     INTEGER   not null ,
+    fact_id_1               INTEGER   not null ,
+    domain_concept_id_2     INTEGER   not null ,
+    fact_id_2               INTEGER   not null ,
+    relationship_concept_id INTEGER   not null ,
     -- 
     unit_id                       STRING  
 )

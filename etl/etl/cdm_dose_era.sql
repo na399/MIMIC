@@ -11,17 +11,17 @@
 --HINT DISTRIBUTE_ON_KEY(person_id)
 CREATE OR REPLACE TABLE @etl_project.@etl_dataset.cdm_dose_era
 (
-    dose_era_id           INT64     not null ,
-    person_id             INT64     not null ,
-    drug_concept_id       INT64     not null ,
-    unit_concept_id       INT64     not null ,
+    dose_era_id           INTEGER   not null ,
+    person_id             INTEGER   not null ,
+    drug_concept_id       INTEGER   not null ,
+    unit_concept_id       INTEGER   not null ,
     dose_value            FLOAT64   not null ,
     dose_era_start_date   DATE      not null ,
     dose_era_end_date     DATE      not null ,
     -- 
     unit_id                       STRING,
     load_table_id                 STRING,
-    load_row_id                   INT64
+    load_row_id                   BIGINT
 )
 ;
 
@@ -93,13 +93,13 @@ SELECT
                     AND box_size IS NOT NULL
                     AND concept_class_id IN ('Branded Drug Box', 'Clinical Drug Box', 'Marketed Product',
                                             'Quant Branded Box', 'Quant Clinical Box')
-                THEN amount_value * quantity * box_size / days_supply
+                THEN CAST(amount_value AS DOUBLE) * CAST(quantity AS DOUBLE) * CAST(box_size AS DOUBLE) / CAST(days_supply AS DOUBLE)
                 WHEN quantity > 0
                     AND concept_class_id NOT IN ('Branded Drug Box', 'Clinical Drug Box', 'Marketed Product',
                                                 'Quant Branded Box', 'Quant Clinical Box')
-                THEN amount_value * quantity / days_supply
+                THEN CAST(amount_value AS DOUBLE) * CAST(quantity AS DOUBLE) / CAST(days_supply AS DOUBLE)
                 WHEN quantity = 0 AND box_size IS NOT NULL
-                THEN amount_value * box_size / days_supply
+                THEN CAST(amount_value AS DOUBLE) * CAST(box_size AS DOUBLE) / CAST(days_supply AS DOUBLE)
                 WHEN quantity = 0 AND box_size IS NULL
                 THEN -1
             END
@@ -110,9 +110,9 @@ SELECT
         THEN
             CASE
                 WHEN denominator_value IS NOT NULL
-                THEN numerator_value / days_supply
+                THEN CAST(numerator_value AS DOUBLE) / CAST(days_supply AS DOUBLE)
                 WHEN denominator_value IS NULL AND quantity != 0
-                THEN numerator_value * quantity / days_supply
+                THEN CAST(numerator_value AS DOUBLE) * CAST(quantity AS DOUBLE) / CAST(days_supply AS DOUBLE)
                 WHEN denominator_value IS NULL AND quantity = 0
                 THEN -1
             END
@@ -123,7 +123,7 @@ SELECT
         THEN
             CASE
                 WHEN quantity > 0
-                THEN quantity / days_supply
+                THEN CAST(quantity AS DOUBLE) / CAST(days_supply AS DOUBLE)
                 WHEN quantity = 0
                 THEN -1
             END
@@ -133,9 +133,9 @@ SELECT
         THEN
             CASE
                 WHEN denominator_value IS NOT NULL
-                THEN numerator_value * 24 / denominator_value
+                THEN CAST(numerator_value AS DOUBLE) * 24 / CAST(denominator_value AS DOUBLE)
                 WHEN denominator_value IS NULL AND quantity != 0
-                THEN numerator_value * 24 / quantity
+                THEN CAST(numerator_value AS DOUBLE) * 24 / CAST(quantity AS DOUBLE)
                 WHEN denominator_value IS NULL AND quantity = 0
                 THEN -1
             END
@@ -290,7 +290,7 @@ SELECT
     drug_concept_id                                 AS drug_concept_id,
     unit_concept_id                                 AS unit_concept_id,
     dose_value                                      AS dose_value,
-    DATE_SUB(event_date, INTERVAL 30 DAY)           AS end_date   -- unpad the end date
+    event_date - INTERVAL 30 DAY                    AS end_date   -- unpad the end date
 FROM @etl_project.@etl_dataset.tmp_cteDoseEndDates_e
 WHERE
     (2 * start_ordinal) - overall_ord = 0
@@ -339,7 +339,7 @@ GROUP BY
 
 INSERT INTO @etl_project.@etl_dataset.cdm_dose_era
 SELECT
-    FARM_FINGERPRINT(GENERATE_UUID())   AS dose_era_id,
+    CAST(nextval('@etl_dataset.seq_dose_era_id') AS INTEGER) AS dose_era_id,
     person_id                           AS person_id,
     drug_concept_id                     AS drug_concept_id,
     unit_concept_id                     AS unit_concept_id,
@@ -348,7 +348,7 @@ SELECT
     drug_era_end_date                   AS dose_era_end_date,
     'dose_era.drug_exposure'            AS unit_id,
     CAST(NULL AS STRING)                AS load_table_id,
-    CAST(NULL AS INT64)                 AS load_row_id
+    CAST(NULL AS BIGINT)                AS load_row_id
 FROM @etl_project.@etl_dataset.tmp_cteDoseFinalEnds
 GROUP BY
     person_id,

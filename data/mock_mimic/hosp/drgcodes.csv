@@ -1,0 +1,2 @@
+subject_id,hadm_id,drg_code,drg_type,description
+1,10,001,MDC,General
