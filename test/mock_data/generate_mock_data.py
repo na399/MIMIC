@@ -361,7 +361,7 @@ def build_sources(base_dir: Path) -> None:
 
 def map_type(bq_type: str) -> str:
     return {
-        "INT64": "BIGINT",
+        "INT64": "INTEGER",
         "STRING": "VARCHAR",
         "FLOAT64": "DOUBLE",
         "DATE": "DATE",

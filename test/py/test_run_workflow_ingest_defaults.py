@@ -37,7 +37,10 @@ class TestRunWorkflowIngestDefaults(unittest.TestCase):
             "@ingest_all_varchar_flag",
             "@ingest_drop_raw_flag",
             "@ingest_keep_case_flag",
+            "@ingest_skip_if_loaded_flag",
         ):
             self.assertIn(key, variables)
-            self.assertEqual(variables[key], "")
-
+            if key == "@ingest_skip_if_loaded_flag":
+                self.assertEqual(variables[key], "--skip-if-loaded")
+            else:
+                self.assertEqual(variables[key], "")

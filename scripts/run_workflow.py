@@ -222,6 +222,11 @@ def apply_optimize_defaults(etlconf: Dict[str, Any]) -> None:
     variables.setdefault("@optimize_enable", "0")
     variables.setdefault("@optimize_enable_large", "0")
 
+def apply_cleanup_defaults(etlconf: Dict[str, Any]) -> None:
+    variables = etlconf.setdefault("variables", {})
+    variables.setdefault("@cleanup_enable", "1")
+    variables.setdefault("@cleanup_vacuum", "1")
+
 
 def verify_vocab_tables(etlconf: Dict[str, Any]) -> None:
     variables = etlconf.get("variables", {}) or {}
@@ -276,6 +281,7 @@ def main() -> int:
     apply_audit_defaults(merged_etlconf)
     apply_ingest_defaults(merged_etlconf)
     apply_optimize_defaults(merged_etlconf)
+    apply_cleanup_defaults(merged_etlconf)
     verify_vocab_tables(merged_etlconf)
 
     config_dir = etlconf_path.parent

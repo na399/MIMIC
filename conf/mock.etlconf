@@ -15,7 +15,7 @@
         "@etl_project": "@duckdb_catalog",
         "@etl_dataset": "omop_cdm",
         "@cdm_schema": "omop_cdm",
-        "@omop_schema": "omop",
+        "@omop_schema": "main",
         "@audit_schema": "audit",
         "@custom_mapping_dir": "custom_mapping_csv",
         "@crosswalk_dir": "crosswalk_csv",
@@ -33,8 +33,7 @@
         "@wf_project": "@duckdb_catalog",
         "@wf_dataset": "raw_waveform",
         "@athena_export_path": "",
-        "@publish_materialize": "0"
-        ,
+        
         "@optimize_enable": "0",
         "@optimize_enable_large": "0"
     },
@@ -53,7 +52,7 @@
         {"workflow": "custom_mapping", "type": "py", "conf": "workflow_custom_mapping.conf"},
         {"workflow": "etl", "type": "sql", "conf": "workflow_etl.conf"},
         {"workflow": "publish", "type": "sql", "conf": "workflow_publish.conf"},
-        {"workflow": "materialize", "type": "py", "conf": "workflow_materialize.conf"},
-        {"workflow": "audit", "type": "sql", "conf": "workflow_audit.conf"}
+        {"workflow": "audit", "type": "sql", "conf": "workflow_audit.conf"},
+        {"workflow": "cleanup", "type": "py", "conf": "workflow_cleanup.conf"}
     ]
 }

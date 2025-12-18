@@ -60,6 +60,7 @@ uv run python scripts/run_workflow.py -e conf/full.etlconf \
 Notes:
 - MIMIC-IV v2+ stores `patients`, `admissions`, and `transfers` in the `hosp/` folder.
 - `conf/full.etlconf` and `conf/dev.etlconf` default to ingesting only the MIMIC tables used by this ETL; to ingest everything, set `--set @ingest_include_tables=` (empty).
+- Ingest defaults to `--skip-if-loaded` (fast reruns when raw tables are already present with the same source fingerprint + rowcount); disable with `--set @ingest_skip_if_loaded_flag=`. Note that after a successful run the default cleanup step drops raw schemas, so this mainly helps reruns after an earlier failure.
 - For a full load, omit `@ingest_row_limit` (expect a much longer runtime).
 
 For a clean rerun (archive the prior DuckDB output first):
@@ -115,15 +116,18 @@ uv run python scripts/create_vocab_snapshot.py --full-db data/vocab.duckdb --out
 
 ## Outputs
 
-- `omop_cdm.*`: internal ETL tables (includes `voc_*` views and custom vocab tables)
-- `omop.*`: published OMOP tables (views, no `cdm_` prefix; `omop.source` corresponds to OMOP `cdm_source`)
-- `audit.*`: post-ETL audits (`audit.table_population`, `audit.mapping_rate`)
-- Optional: `omop_cdm.crosswalk_d_items_to_concept` loaded from `crosswalk_csv/d_items_to_concept.csv` (mapping review aid).
+- `main.*`: final OMOP CDM tables (no `cdm_` prefix) plus OMOP vocabulary tables (`concept`, `concept_relationship`, `concept_ancestor`, etc).
+- `audit.*`: post-ETL audits (`audit.table_population`, `audit.mapping_rate`).
+- When `@cleanup_enable=0`, intermediate schemas remain (e.g., `omop_cdm.*`, `raw_hosp.*`, `raw_icu.*`) for debugging.
+
+Cleanup knobs:
+- `@cleanup_enable` (default: `1`)
+- `@cleanup_vacuum` (default: `1`, can be slow on full runs)
 
 Quick sanity check with the DuckDB CLI:
 
 ```bash
-duckdb data/mimiciv_demo.duckdb -c "select count(*) from omop.person;"
+duckdb data/mimiciv_demo.duckdb -c "select count(*) from main.person;"
 ```
 
 ### Audits and thresholds
@@ -145,14 +149,6 @@ uv run python scripts/run_workflow.py -e conf/dev.etlconf \
   --set @audit_min_percent_mapped=50 \
   --set @audit_min_percent_standard=50 \
   --set @audit_mapping_tables=condition_occurrence,procedure_occurrence,drug_exposure
-```
-
-### Optional: materialize OMOP tables
-
-By default `omop.*` are views. To materialize them into base tables:
-
-```bash
-uv run python scripts/run_workflow.py -e conf/dev.etlconf --set @publish_materialize=1
 ```
 
 ## Performance tuning (full v3.x)
@@ -189,8 +185,9 @@ The curated index list lives in `scripts/optimize_duckdb_indexes.py` (`INDEX_SPE
 
 ## Mapping precedence / unknowns
 
-- Base vocab comes from the attached vocab DuckDB (`@vocab_db_path`), exposed as `omop_cdm.voc_*` views.
+- During the ETL, base vocab comes from the attached vocab DuckDB (`@vocab_db_path`).
 - Custom mapping CSVs (`custom_mapping_csv/gcpt_*.csv`) are loaded into `omop_cdm.voc_custom_*` and UNION’ed into `omop_cdm.voc_*`.
+- At publish time the OMOP vocab tables are copied into the output schema (default: `main`) so the resulting DuckDB is self-contained.
 - When a row cannot be mapped to a valid standard concept in the expected domain, the OMOP `*_concept_id` is set to `0` (kept for completeness; see `audit.mapping_rate` / `audit.unmapped_top`).
 
 ## Tests

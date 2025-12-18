@@ -68,16 +68,37 @@ class TestMockE2E(unittest.TestCase):
             try:
                 fails = con.execute("SELECT COUNT(*) FROM audit.table_population WHERE status='FAIL'").fetchone()[0]
                 self.assertEqual(fails, 0)
-                self.assertGreater(con.execute("SELECT COUNT(*) FROM omop.condition_occurrence").fetchone()[0], 0)
+                self.assertGreater(con.execute("SELECT COUNT(*) FROM main.condition_occurrence").fetchone()[0], 0)
                 bad_names = con.execute(
-                    "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='omop' AND table_name LIKE 'cdm_%'"
+                    "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='main' AND table_name LIKE 'cdm_%'"
                 ).fetchone()[0]
                 self.assertEqual(bad_names, 0)
                 bigints = con.execute(
                     "SELECT COUNT(*) FROM information_schema.columns "
-                    "WHERE table_schema='omop' AND data_type IN ('BIGINT','HUGEINT','UBIGINT')"
+                    "WHERE table_schema='main' AND data_type IN ('BIGINT','HUGEINT','UBIGINT')"
                 ).fetchone()[0]
                 self.assertEqual(bigints, 0)
+                view_count = con.execute(
+                    "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='main' AND table_type='VIEW'"
+                ).fetchone()[0]
+                self.assertEqual(view_count, 0)
+                self.assertEqual(
+                    con.execute(
+                        "SELECT table_type FROM information_schema.tables "
+                        "WHERE table_schema='main' AND table_name='concept_ancestor'"
+                    ).fetchone()[0],
+                    "BASE TABLE",
+                )
+                self.assertEqual(
+                    con.execute("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='omop_cdm'").fetchone()[
+                        0
+                    ],
+                    0,
+                )
+                self.assertEqual(
+                    con.execute("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='raw_hosp'").fetchone()[0],
+                    0,
+                )
                 self.assertGreater(con.execute("SELECT COUNT(*) FROM audit.mapping_rate").fetchone()[0], 0)
                 self.assertGreater(con.execute("SELECT COUNT(*) FROM audit.unmapped_top").fetchone()[0], 0)
                 cond_map = con.execute(
